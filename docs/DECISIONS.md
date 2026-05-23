@@ -2,6 +2,7 @@
 
 One sentence per decision (per AI rule 13). Newest first.
 
+- 2026-05-23 — Phase 1.1 + 1.3: built single-screen onboarding (age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) + results dashboard (calorie target, macro bars, per-meal protein, fiber, BMI/BF% bands, safety warnings); added Supabase `profiles` table migration with full RLS; (app) layout auto-redirects incomplete profiles to onboarding.
 - 2026-05-23 — Phase 1.2: ported FuelWise v8.20 Layer 1 methodology into `/src/lib/science/` (persona × goal matrix; MSJ/HB/KM BMR; 25%/40%/20% calorie caps; per-meal protein with age-graded MPS; fiber 14 g/1000 kcal; activity-graded carb floors; BMI/BF% bands incl. Asian thresholds; diet-pattern protein add); MASTER_PROMPT § 3 rewritten to point at new `/docs/METHODOLOGY.md`; 100/100 unit tests pass.
 - 2026-05-23 — SDK upgrade: bumped Expo 51 → 54 to match Expo Go's current SDK; replaced Reanimated `react-native-reanimated/plugin` with `react-native-worklets/plugin` per SDK 54; dropped NativeWind v2-style `cssInterop` calls (babel preset wires built-ins automatically in v4).
 - 2026-05-23 — Phase 0.1/0.4/0.5: scaffolded Expo SDK 51 + Expo Router v3 + NativeWind v4 + TypeScript strict; established a dark-default design system in `src/lib/design/tokens.ts` consumed by Tailwind and base components (`Text`, `Button`, `Input`, `Screen`).

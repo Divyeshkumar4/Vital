@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
+import { useProfile } from '@/store/profile';
 
 interface AuthState {
   session: Session | null;
@@ -37,6 +38,7 @@ export const useAuth = create<AuthState>((set) => ({
     if (!supabase) return;
     set({ loading: true });
     await supabase.auth.signOut();
+    useProfile.getState().clear();
     set({ session: null, user: null, loading: false });
   },
 }));

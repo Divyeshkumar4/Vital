@@ -12,9 +12,9 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 - ✅ 0.5 Design system (tokens + base components)
 
 ## Phase 1 — Lean MVP: Nutrition core
-- ⬜ 1.1 Onboarding (age/sex/height/weight/units/activity/goal)
+- ✅ 1.1 Onboarding (single scrollable form: age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) + Supabase `profiles` table with RLS
 - ✅ 1.2 Science engine (FuelWise v8.20 Layer 1 methodology adopted — persona × goal matrix, BMR variants, calorie caps, per-meal protein, fiber, BF/BMI bands; 100/100 unit tests pass)
-- ⬜ 1.3 Results dashboard with safety guardrails
+- ✅ 1.3 Results dashboard (calorie target, macro bars, per-meal protein, fiber, BMI/BF% bands, safety warnings)
 - ⬜ 1.4 Open Food Facts integration (search + barcode)
 - ⬜ 1.5 Food logging with live totals
 - ⬜ 1.6 Diet-plan generator
