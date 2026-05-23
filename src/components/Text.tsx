@@ -1,7 +1,4 @@
 import { Text as RNText, TextProps } from 'react-native';
-import { cssInterop } from 'nativewind';
-
-cssInterop(RNText, { className: 'style' });
 
 type Variant = 'display' | 'h1' | 'h2' | 'body' | 'caption' | 'mono';
 

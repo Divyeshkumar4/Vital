@@ -1,8 +1,5 @@
 import { TextInput, TextInputProps, View } from 'react-native';
-import { cssInterop } from 'nativewind';
 import { Text } from './Text';
-
-cssInterop(TextInput, { className: 'style' });
 
 interface Props extends TextInputProps {
   label?: string;

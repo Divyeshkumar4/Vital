@@ -1,8 +1,5 @@
 import { Pressable, PressableProps, ActivityIndicator } from 'react-native';
-import { cssInterop } from 'nativewind';
 import { Text } from './Text';
-
-cssInterop(Pressable, { className: 'style' });
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -33,8 +30,8 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
-      disabled={isDisabled}
+      accessibilityState={{ disabled: isDisabled ?? undefined, busy: loading }}
+      disabled={isDisabled ?? undefined}
       className={`min-h-12 px-6 rounded-lg items-center justify-center ${v.bg} ${isDisabled ? 'opacity-50' : ''} ${className}`}
       {...rest}
     >
