@@ -2,6 +2,8 @@
 
 One sentence per decision (per AI rule 13). Newest first.
 
+- 2026-05-23 — Phase 1.2: ported FuelWise v8.20 Layer 1 methodology into `/src/lib/science/` (persona × goal matrix; MSJ/HB/KM BMR; 25%/40%/20% calorie caps; per-meal protein with age-graded MPS; fiber 14 g/1000 kcal; activity-graded carb floors; BMI/BF% bands incl. Asian thresholds; diet-pattern protein add); MASTER_PROMPT § 3 rewritten to point at new `/docs/METHODOLOGY.md`; 100/100 unit tests pass.
+- 2026-05-23 — SDK upgrade: bumped Expo 51 → 54 to match Expo Go's current SDK; replaced Reanimated `react-native-reanimated/plugin` with `react-native-worklets/plugin` per SDK 54; dropped NativeWind v2-style `cssInterop` calls (babel preset wires built-ins automatically in v4).
 - 2026-05-23 — Phase 0.1/0.4/0.5: scaffolded Expo SDK 51 + Expo Router v3 + NativeWind v4 + TypeScript strict; established a dark-default design system in `src/lib/design/tokens.ts` consumed by Tailwind and base components (`Text`, `Button`, `Input`, `Screen`).
 - 2026-05-23 — Phase 0.2: wired `@supabase/supabase-js` with AsyncStorage session persistence; client returns `null` until `EXPO_PUBLIC_SUPABASE_URL`/`ANON_KEY` are set so the app boots before the founder creates the Supabase project.
 - 2026-05-23 — Phase 0.3: scaffolded email sign-up / sign-in / sign-out screens; Google/Apple sign-in stubbed with an Alert because OAuth requires Supabase provider credentials (founder action).

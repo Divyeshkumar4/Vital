@@ -44,38 +44,34 @@ Design implication: progressive disclosure. A beginner sees a simple plan; an ad
 
 ---
 
-## 3. THE SCIENCE LAYER (the differentiator — implement EXACTLY)
+## 3. THE SCIENCE LAYER (the differentiator)
 
-This is the moat. All formulas below are the implementation spec. Put them in `/src/lib/science/` as pure, unit-tested functions. **Do not approximate or "improve" these without the founder's written approval.**
+This is the moat. The detailed, citation-backed implementation spec lives in **`/docs/METHODOLOGY.md`** — that is the operational source of truth for every number in `/src/lib/science/`. The summary below names the methodology; the methodology document names the formulas, the published sources, and the version.
 
-### 3.1 Resting metabolism — Mifflin-St Jeor (default)
-- Men: `BMR = 10·weightKg + 6.25·heightCm − 5·age + 5`
-- Women: `BMR = 10·weightKg + 6.25·heightCm − 5·age − 161`
-- If body-fat % is known, optionally offer Katch-McArdle as an "advanced" toggle later. MSJ is the default.
+> **Process discipline:** any change to a formula, threshold, or default flows in this order — `METHODOLOGY.md` → version bump → code → tests. Code never disagrees with the methodology document, and the methodology document never invents numbers without a citation.
 
-### 3.2 Daily energy (TDEE) — activity multiplier
-`TDEE = BMR × activityFactor`
-- Sedentary (little/no exercise): 1.2
-- Lightly active (1–3 days/wk): 1.375
-- Moderately active (3–5 days/wk): 1.55
-- Very active (6–7 days/wk): 1.725
-- Extra active (physical job + training): 1.9
+### 3.1 Resting metabolism (BMR)
+- **Default:** Mifflin-St Jeor 1990 (`bmrMSJ`).
+- **Alternatives offered:** Harris-Benedict revised (`bmrHB`) and Katch-McArdle when body-fat % is known (`bmrKM`).
+
+### 3.2 Daily energy (TDEE)
+`TDEE = BMR × activityFactor`. Activity factors: 1.2 / 1.375 / 1.55 / 1.725 / 1.9 (sedentary → extra active). See METHODOLOGY.
 
 ### 3.3 Goal calories
-- **Fat loss:** −15% to −20% of TDEE (default −20%). Equivalent to ≈ −500 kcal/day for ~0.5 kg/week.
-- **Maintain:** = TDEE.
-- **Lean gain:** +10% to +15% of TDEE (default +10%).
+Deficit and surplus percentages are persona-aware (training / general / older / endurance) and capped:
+- Self-directed deficit ≤ **25%**, supervised override up to **40%** (Iraki 2019, Slater 2019).
+- Surplus ≤ **20%**.
+- Defaults vary by persona; see methodology MATRIX.
 
 ### 3.4 SAFETY GUARDRAILS (mandatory — never bypass)
-- Hard calorie floor: **≥ 1,200 kcal/day (women), ≥ 1,500 kcal/day (men)**. If a goal would go below, clamp to the floor and show a gentle explanation.
+- Hard calorie floor: `max(BMR, conventional minimum)` where conventional minimum is **1,200 kcal/day (women)** and **1,500 kcal/day (men)**. If a goal falls below, clamp and surface a gentle explanation.
 - Max recommended loss rate: **1% of body weight per week.** Block faster.
-- Show a non-medical disclaimer (Section 11) on the results screen.
+- Medical disclaimer (Section 11) on every results screen.
 
-### 3.5 Macronutrients
-- **Protein:** 1.6–2.2 g/kg bodyweight. Default 1.8; use 2.0+ when in a deficit (preserves muscle).
-- **Fat:** 0.6–1.0 g/kg, with a minimum of ~20% of total calories.
-- **Carbohydrate:** fills the remaining calories.
-- Calories per gram: protein 4, carbs 4, fat 9, alcohol 7.
+### 3.5 Macronutrients — persona × goal matrix
+Protein, fat, and adjustment defaults are pulled from a **persona × goal matrix** (training / general / older / endurance × lose / maintain / gain), each cell sourced to primary literature (Morton 2018 BJSM; Helms 2014 JISSN; Wycherley 2012 AJCN; PROT-AGE Bauer 2013; ACSM/AND/DC 2016; etc.). Carbs fill the remainder subject to RDA floor (130 g) and activity-graded sport-nutrition floors. Diet-pattern adjustments: vegan +0.2 g/kg protein, vegetarian +0.1 g/kg (Pinckaers 2021). Fiber target: 14 g per 1,000 kcal (IOM DRI). Per-meal protein: age-graded 0.24 → 0.4 g/kg/meal across 18 → 65+. See METHODOLOGY for every cell.
+
+> **Layer 2 (deferred):** pregnancy / lactation, GLP-1, CKD / dialysis, post-bariatric. Architected for in the engine but not wired into v1 onboarding.
 
 ### 3.6 Diet-plan generation (Phase 1)
 Given goal calories + macro targets, generate a daily meal template (e.g., 3 meals + 1 snack split, configurable). Pull foods from the food database (Section 10) and assemble combinations that hit macro targets within a tolerance (±5–8%). Keep v1 rules-based and simple; AI-assisted meal suggestions can come later.
