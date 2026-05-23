@@ -48,12 +48,10 @@ export function carbAdvisory(
   const perKg = carbG / weightKg;
   const floor = carbFloorGkg(activityFactor, persona);
   if (floor > 0 && perKg < floor) {
-    const tier =
-      persona === 'training' ? 'ACSM/AND/DC 2016 sport-nutrition' : 'general activity-graduated';
-    return `Carbs at ${perKg.toFixed(2)} g/kg are below the ${floor} g/kg ${tier} floor for your activity level. Reduce fat or protein to leave more room for carbs.`;
+    return `Carbs at ${perKg.toFixed(2)} g/kg are below the recommended ${floor} g/kg for your activity level. Performance and recovery may suffer over time — try lowering fat or protein to leave room for carbs.`;
   }
   if (perKg > CARB_UPPER_WARNING_GKG) {
-    return `Carbs at ${perKg.toFixed(2)} g/kg are unusually high (plausible only for ultra-endurance, Burke 2011). Double-check your sliders.`;
+    return `Carbs at ${perKg.toFixed(2)} g/kg are unusually high. This level is typically only needed for ultra-endurance athletes — double-check your inputs.`;
   }
   return null;
 }
@@ -127,23 +125,23 @@ export function assembleMacros(input: MacroAssemblyInput): MacroAssembly {
   if (input.proteinPerKgRequested < proteinBand.min) {
     warnings.push({
       severity: 'warn',
-      text: `Protein at ${input.proteinPerKgRequested.toFixed(1)} g/kg is below the ${proteinBand.min}–${proteinBand.max} target. ${proteinBand.note}`,
+      text: `Protein at ${input.proteinPerKgRequested.toFixed(1)} g/kg is below the recommended ${proteinBand.min}–${proteinBand.max} range for your goal — consider raising it to protect muscle.`,
     });
   } else if (input.proteinPerKgRequested > proteinBand.max) {
     warnings.push({
       severity: 'info',
-      text: `Protein at ${input.proteinPerKgRequested.toFixed(1)} g/kg is above the ${proteinBand.min}–${proteinBand.max} target.`,
+      text: `Protein at ${input.proteinPerKgRequested.toFixed(1)} g/kg is above the recommended ${proteinBand.min}–${proteinBand.max} range. Not harmful, but more isn't necessarily better.`,
     });
   }
   if (input.fatPctRequested < input.cell.fat.min) {
     warnings.push({
       severity: 'warn',
-      text: `Fat at ${input.fatPctRequested}% is below the ${input.cell.fat.min}–${input.cell.fat.max}% target. ${input.cell.fat.note}`,
+      text: `Fat at ${input.fatPctRequested}% of calories is below the recommended ${input.cell.fat.min}–${input.cell.fat.max}% — going too low for long stretches can affect hormones.`,
     });
   } else if (input.fatPctRequested > input.cell.fat.max) {
     warnings.push({
       severity: 'warn',
-      text: `Fat at ${input.fatPctRequested}% is above the ${input.cell.fat.min}–${input.cell.fat.max}% target.`,
+      text: `Fat at ${input.fatPctRequested}% of calories is above the recommended ${input.cell.fat.min}–${input.cell.fat.max}% range.`,
     });
   }
 
@@ -152,7 +150,7 @@ export function assembleMacros(input: MacroAssemblyInput): MacroAssembly {
   if (fatG < fatFloorG) {
     warnings.push({
       severity: 'warn',
-      text: `Fat at ${fatG.toFixed(0)} g/day is below ~${fatFloorG.toFixed(0)} g/day (0.5 g/kg). Sustained intake this low can affect hormones (Helms 2014; FAO 2010).`,
+      text: `Fat at ${fatG.toFixed(0)} g/day is very low (below ~${fatFloorG.toFixed(0)} g/day). Sustained intake this low can affect hormones over time.`,
     });
   }
 
@@ -163,17 +161,13 @@ export function assembleMacros(input: MacroAssemblyInput): MacroAssembly {
     if (carbG < CARB_RDA_FLOOR_G) {
       warnings.push({
         severity: 'warn',
-        text: `Carbs at ${carbG.toFixed(0)} g/day are below the IOM RDA of ${CARB_RDA_FLOOR_G} g/day (brain glucose needs). Acceptable short-term; not a long-term default.`,
+        text: `Carbs at ${carbG.toFixed(0)} g/day are below the daily minimum your brain needs (~${CARB_RDA_FLOOR_G} g). OK short-term; not great as a long-term default.`,
       });
     }
   }
 
-  if (dietAdd > 0) {
-    warnings.push({
-      severity: 'info',
-      text: `Diet pattern adjustment: +${dietAdd} g/kg added to protein because plant proteins have lower leucine per gram (Pinckaers 2021).`,
-    });
-  }
+  // Diet pattern bump is intentionally not surfaced as a warning — it's a default
+  // computation detail, not a heads-up. The methodology doc explains it.
 
   return {
     effectiveRatioGkg: effectiveRatio,

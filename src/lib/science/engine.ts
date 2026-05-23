@@ -115,7 +115,7 @@ export function compute(input: ScienceInput): ScienceComputeResult {
   if (floored.flooredTo !== null) {
     warnings.unshift({
       severity: 'warn',
-      text: `Calorie target clamped to ${Math.round(floored.flooredTo)} kcal/day — the safety floor of max(BMR, ${input.sex === 'male' ? 1500 : 1200} kcal). Going lower risks lean-mass loss and metabolic adaptation.`,
+      text: `Your calorie target was raised to ${Math.round(floored.flooredTo)} kcal/day to keep you above a safe minimum. Eating less than this for long stretches can harm your metabolism and lose muscle.`,
     });
   }
 

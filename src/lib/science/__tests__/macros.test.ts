@@ -34,7 +34,7 @@ describe('carbAdvisory', () => {
     // 80 kg user, training, moderate (af 1.55) → floor 5 g/kg. 200 g / 80 kg = 2.5 g/kg → below.
     const msg = carbAdvisory(200, 80, 1.55, 'training');
     expect(msg).not.toBeNull();
-    expect(msg).toMatch(/below the 5 g\/kg/);
+    expect(msg).toMatch(/recommended 5 g\/kg/);
   });
 
   it('returns null when carbs are within the band', () => {
@@ -141,8 +141,9 @@ describe('assembleMacros — vegan add', () => {
     expect(result.proteinG).toBeCloseTo(98, 4);
   });
 
-  it('surfaces an info warning explaining the diet add', () => {
-    expect(result.warnings.some((w) => w.severity === 'info' && /Pinckaers/.test(w.text))).toBe(true);
+  it('does NOT surface a citation-laden warning for the diet add (computation detail)', () => {
+    // Diet pattern adjustment is silent in the warnings — it's reflected in proteinG.
+    expect(result.warnings.some((w) => /Pinckaers/.test(w.text))).toBe(false);
   });
 });
 

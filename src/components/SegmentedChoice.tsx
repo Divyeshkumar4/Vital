@@ -1,5 +1,6 @@
-import { Pressable, View } from 'react-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import { Text } from './Text';
+import { tokens } from '@/lib/design/tokens';
 
 export interface SegmentedChoiceOption<T extends string> {
   value: T;
@@ -35,19 +36,31 @@ export function SegmentedChoice<T extends string>({
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               className={`min-h-12 px-4 py-3 rounded-lg border ${
-                selected ? 'bg-accent border-accent' : 'bg-bg-surface border-border'
+                selected
+                  ? 'bg-accent border-accent'
+                  : 'bg-bg-surface border-border'
               } ${vertical ? 'w-full' : ''}`}
             >
-              <Text className={selected ? 'text-accent-contrast font-semibold' : 'text-fg'}>
+              <RNText
+                style={{
+                  color: selected ? tokens.colors.accent.contrast : tokens.colors.fg.DEFAULT,
+                  fontSize: 16,
+                  fontWeight: selected ? '600' : '400',
+                }}
+              >
                 {opt.label}
-              </Text>
+              </RNText>
               {opt.hint ? (
-                <Text
-                  variant="caption"
-                  className={selected ? 'text-accent-contrast/80' : 'text-fg-muted'}
+                <RNText
+                  style={{
+                    color: selected ? tokens.colors.accent.contrast : tokens.colors.fg.muted,
+                    fontSize: 13,
+                    marginTop: 2,
+                    opacity: selected ? 0.85 : 1,
+                  }}
                 >
                   {opt.hint}
-                </Text>
+                </RNText>
               ) : null}
             </Pressable>
           );

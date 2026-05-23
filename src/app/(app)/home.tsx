@@ -193,18 +193,24 @@ export default function Home() {
             ) : null}
           </Card>
 
-          {result.warnings.length > 0 ? (
-            <Card title={t('dashboard.safetyHeading')}>
-              {result.warnings.map((w, i) => (
-                <View
-                  key={i}
-                  className={`p-3 rounded-md border ${severityClasses(w.severity)}`}
-                >
-                  <Text variant="caption">{w.text}</Text>
-                </View>
-              ))}
-            </Card>
-          ) : null}
+          {(() => {
+            const actionable = result.warnings.filter(
+              (w) => w.severity === 'warn' || w.severity === 'danger',
+            );
+            if (actionable.length === 0) return null;
+            return (
+              <Card title={t('dashboard.safetyHeading')}>
+                {actionable.map((w, i) => (
+                  <View
+                    key={i}
+                    className={`p-3 rounded-md border ${severityClasses(w.severity)}`}
+                  >
+                    <Text variant="caption">{w.text}</Text>
+                  </View>
+                ))}
+              </Card>
+            );
+          })()}
         </>
       ) : (
         <Card>

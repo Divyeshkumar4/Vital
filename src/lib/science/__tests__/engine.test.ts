@@ -82,7 +82,7 @@ describe('compute — safety floor activates for tiny user with deep deficit', (
       expect(r.value.finalCalories).toBeCloseTo(1214, 0);
     });
     it('warns about the clamp', () => {
-      expect(r.value.warnings.some((w) => /safety floor/.test(w.text))).toBe(true);
+      expect(r.value.warnings.some((w) => /safe minimum/.test(w.text))).toBe(true);
     });
   }
 });

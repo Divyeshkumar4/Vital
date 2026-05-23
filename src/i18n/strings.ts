@@ -99,7 +99,7 @@ const en = {
     bodyFat: 'Body fat',
     bmr: 'BMR (resting metabolism)',
     tdee: 'TDEE (daily expenditure)',
-    safetyHeading: 'Heads-up',
+    safetyHeading: 'A few things to know',
     editProfile: 'Edit your info',
     startLogging: 'Start logging food',
     startLoggingComing: 'Coming in Phase 1.5',
