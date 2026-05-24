@@ -24,11 +24,17 @@ export default function FoodScan() {
   const [permission, requestPermission] = useCameraPermissions();
   const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const scannedRef = useRef<string | null>(null);
+  // Persistent until the user explicitly dismisses the error or moves to a
+  // genuinely different barcode. This stops the scanner from firing the same
+  // failed barcode many times per second (camera frame rate).
+  const lastScannedRef = useRef<string | null>(null);
 
   const onScanned = async ({ data }: { data: string }) => {
-    if (lookingUp || scannedRef.current === data) return;
-    scannedRef.current = data;
+    if (lookingUp) return;
+    // Same barcode as the last attempt - ignore.
+    if (lastScannedRef.current === data) return;
+
+    lastScannedRef.current = data;
     setError(null);
     setLookingUp(true);
     try {
@@ -36,21 +42,24 @@ export default function FoodScan() {
       if (!off) {
         setError(t('foods.scanNotFound'));
         setLookingUp(false);
-        // Allow rescanning the same barcode after a moment.
-        setTimeout(() => {
-          scannedRef.current = null;
-        }, 2000);
         return;
       }
-      const saved = await cacheFood(offFoodToInsert(off));
-      router.replace({ pathname: '/(app)/foods/[id]', params: { id: saved.id } });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t('foods.scanError'));
+      try {
+        const saved = await cacheFood(offFoodToInsert(off));
+        router.replace({ pathname: '/(app)/foods/[id]', params: { id: saved.id } });
+      } catch {
+        setError(t('foods.saveError'));
+        setLookingUp(false);
+      }
+    } catch {
+      setError(t('foods.scanError'));
       setLookingUp(false);
-      setTimeout(() => {
-        scannedRef.current = null;
-      }, 2000);
     }
+  };
+
+  const dismissError = () => {
+    setError(null);
+    lastScannedRef.current = null;
   };
 
   if (!permission) {
@@ -74,13 +83,17 @@ export default function FoodScan() {
     );
   }
 
+  // The camera stops listening for scans whenever a lookup is in-flight OR an
+  // error banner is showing. The user must tap the error to resume scanning.
+  const scanGated = lookingUp || error !== null;
+
   return (
     <View className="flex-1 bg-black">
       <CameraView
         style={{ flex: 1 }}
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: [...BARCODE_TYPES] }}
-        onBarcodeScanned={lookingUp ? undefined : onScanned}
+        onBarcodeScanned={scanGated ? undefined : onScanned}
       />
 
       <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
@@ -121,15 +134,24 @@ export default function FoodScan() {
             </View>
           ) : null}
           {error ? (
-            <View className="px-4 py-3 rounded-md bg-black/60 border border-danger">
+            <Pressable
+              onPress={dismissError}
+              accessibilityRole="button"
+              className="px-4 py-3 rounded-md bg-black/80 border border-danger gap-1"
+            >
               <Text variant="caption" className="text-danger">
                 {error}
               </Text>
+              <Text variant="caption" className="text-fg-muted">
+                {t('foods.scanDismiss')}
+              </Text>
+            </Pressable>
+          ) : null}
+          {!lookingUp && !error ? (
+            <View className="px-4 py-3 rounded-md bg-black/60 border border-white/20">
+              <Text variant="caption">{t('foods.scanHelp')}</Text>
             </View>
           ) : null}
-          <View className="px-4 py-3 rounded-md bg-black/60 border border-white/20">
-            <Text variant="caption">{t('foods.scanHelp')}</Text>
-          </View>
         </View>
       </SafeAreaView>
     </View>

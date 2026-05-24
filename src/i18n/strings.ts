@@ -133,6 +133,7 @@ const en = {
     scanLooking: 'Looking up product…',
     scanNotFound: 'That barcode is not in Open Food Facts yet.',
     scanError: 'Could not look up that barcode. Check your internet and try again.',
+    scanDismiss: 'Tap to try another barcode',
     saveError: 'Could not save that food. Please try again.',
   },
   errors: {
