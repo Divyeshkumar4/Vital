@@ -224,7 +224,7 @@ export default function Onboarding() {
         targetFiberG: Math.round(finalResult.value.fiberG),
         methodologyVersion: finalResult.value.methodologyVersion,
       });
-      router.replace('/(app)/home');
+      router.replace('/(app)/(tabs)/home');
     } catch (e) {
       setValidationError(e instanceof Error ? e.message : t('onboarding.errors.saveFailed'));
     } finally {
