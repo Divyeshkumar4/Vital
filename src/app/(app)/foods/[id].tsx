@@ -136,6 +136,10 @@ export default function FoodDetail() {
         </Text>
       </View>
 
+      <Button
+        title={t('log.addTitle')}
+        onPress={() => router.push({ pathname: '/(app)/log/add', params: { foodId: food.id } })}
+      />
       <Button title={t('foods.backToSearch')} variant="secondary" onPress={() => router.back()} />
     </Screen>
   );
