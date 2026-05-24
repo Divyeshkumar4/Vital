@@ -2,6 +2,29 @@
 
 One sentence per decision (per AI rule 13). Newest first.
 
+---
+
+## ⏳ Handoff state (2026-05-24)
+
+**PR #1** ("Phase 0 + Phase 1: foundation and nutrition core complete") was **squash-merged to `main` as commit [`527dd70`](https://github.com/Divyeshkumar4/Vital/commit/527dd70316db0826492e35ecfd729175f6ea9001)** on 2026-05-24. The feature branch `claude/wizardly-knuth-UeWJ3` is preserved on GitHub with the full 14-commit granular history if any future agent needs to read the work step-by-step.
+
+**Where to pick up next:** Phase 2 (workout module + in-gym player + local audio). Master prompt § 8.2 has the per-task list. No Phase 2 code exists yet — a new branch should be cut from `main` when the founder gives the green light.
+
+**Outstanding from earlier phases (deferred, not blockers):**
+- Phase 0.3 — Google / Apple OAuth (needs provider credentials from the founder).
+- Layer 2 of the science engine — pregnancy / lactation, GLP-1, CKD / dialysis, post-bariatric, adaptive TDEE. Documented in `docs/METHODOLOGY.md` § "Layer 2 roadmap". Architecturally hooked but not wired into onboarding.
+
+**Database state of record:** Migrations `0001_profiles.sql`, `0002_foods.sql`, `0003_food_logs.sql` have all been applied to the production Supabase project (`eeltroiupbgfgldburra`). Phase 2 will introduce new tables (exercises, routines, workout_logs, set_logs, exercise_audio per `docs/DATA_MODEL.md` § "Phase 2 — Training").
+
+**Tested on a real iPhone via Expo Go.** End-to-end auth, onboarding, food search (staples + Open Food Facts), barcode scan, logging, dashboard progress bars, meal plan, history, edit profile, sign-out all confirmed working by the founder before merge.
+
+---
+
+## Decisions in chronological order (newest first)
+
+- 2026-05-24 — Final pre-merge cleanup: rewrote `README.md` to be the AI-orientation entry point (phase status, "for AI agents reading this" reading order, full file map, science workflow); fixed stale `/(app)/home` redirect inside `onboarding.tsx` that survived the tabs refactor.
+- 2026-05-23 — Added bundled common-foods staples library (`src/lib/api/staples.ts`) with 62 generic foods spanning Indian + Western staples (rice/roti/dal/paneer/dosa/poha and chicken/eggs/oats/bread/fruit/veg/dairy/fats/nuts) sourced from USDA FoodData Central + standard Indian references; search now merges local staples (instant, 2-char min) with Open Food Facts (debounced, 3-char min); staples cached under `source = 'usda'`.
+- 2026-05-23 — UX refactor to bottom-tab navigation: added `(app)/(tabs)/` group with Home / Log / Plan / Profile (Ionicons in the bar); slimmed Home to "today only" (progress bars + Find a food); moved BMR/TDEE/macro split/BMI/BF/edit/sign-out to a dedicated Profile tab; modal-style screens (foods/, log/add, log/history, onboarding) live outside `(tabs)/` so the tab bar hides on them.
 - 2026-05-23 — Phase 1.5/1.6/1.7: added `food_logs` table with full RLS (select/insert/update/delete own); built logging form (quantity + meal slot, with suggested slot from time-of-day and prefilled serving size); rewrote dashboard with "Today so far" card (kcal + P/F/C progress bars vs target) and quick-nav buttons; today-log + 7-day history screens with refetch-on-focus; hand-curated meal templates (16 items: Indian + Western mix) scaled to per-meal targets via weighted-distance picker on the macros side.
 - 2026-05-23 — Phase 1.4 follow-ups: replaced supabase upsert (which silently tried UPDATE and hit RLS) with select-then-insert in `cacheFood`; relaxed scanner gating so a different barcode auto-clears the previous error.
 - 2026-05-23 — Phase 1.4: integrated Open Food Facts (free public API, no key) for food search + barcode lookup; installed `expo-camera` for barcode scanning with iOS / Android permission strings via `expo-camera` plugin; added Supabase `foods` cache table (RLS: authenticated read + insert); built search screen with debounced live results, barcode scanner with framed overlay, and food detail screen showing per-100g and per-serving nutrition.

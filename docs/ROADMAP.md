@@ -2,33 +2,75 @@
 
 Mirror of `MASTER_PROMPT.md` § 8 with status. Update as tasks complete.
 
-Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on founder
+Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on founder · ⏸ deferred by design
+
+---
+
+## 👉 Pickup point for the next AI agent (2026-05-24)
+
+**Where we are:** Phase 0 + Phase 1 are merged to `main` (PR #1, squash commit `527dd70`). The app is end-to-end working on a real iPhone via Expo Go — founder has tested auth, onboarding, search/scan, logging, dashboard, plan, history.
+
+**What to do next:** **Phase 2 (workout module + in-gym player + local audio)** — see § 8.2 of `docs/MASTER_PROMPT.md` for the per-task spec. Cut a fresh branch from `main` only after the founder gives the green light. Do NOT pre-emptively start coding.
+
+**Before you start any new work, in this order:**
+1. Read `docs/MASTER_PROMPT.md` end-to-end.
+2. Read `AI_RULES.md` — the 13 operating rules.
+3. Read `docs/METHODOLOGY.md` if your change touches the science engine.
+4. Skim recent entries in `docs/DECISIONS.md` for context.
+5. Check this ROADMAP for the current task.
+6. Run `npm install` (if first time on the box), then `npx tsc --noEmit` and `npx jest` — both must pass before you change anything.
+
+---
 
 ## Phase 0 — Foundation
-- ✅ 0.1 Init Expo + TS + Expo Router + NativeWind
-- 🔒 0.2 Create Supabase project (founder action) — client + env wired
-- 🟡 0.3 Auth (email scaffolded; Google/Apple need OAuth credentials)
-- ✅ 0.4 Docs + GitHub repo
-- ✅ 0.5 Design system (tokens + base components)
+- ✅ 0.1 Init Expo SDK 54 + TypeScript strict + Expo Router v6 + NativeWind v4
+- ✅ 0.2 Supabase project + client wired (graceful no-op until `.env` is set)
+- 🟡 0.3 Auth — email sign-up / sign-in / sign-out working end-to-end
+- ⏸ 0.3 Auth — Google / Apple OAuth (deferred — needs provider credentials from founder, then wire `expo-auth-session`)
+- ✅ 0.4 Docs scaffolding + GitHub repo
+- ✅ 0.5 Design system (tokens in `src/lib/design/tokens.ts` + base components)
 
 ## Phase 1 — Lean MVP: Nutrition core
-- ✅ 1.1 Onboarding (single scrollable form: age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) + Supabase `profiles` table with RLS
-- ✅ 1.2 Science engine (FuelWise v8.20 Layer 1 methodology adopted — persona × goal matrix, BMR variants, calorie caps, per-meal protein, fiber, BF/BMI bands; 100/100 unit tests pass)
-- ✅ 1.3 Results dashboard (calorie target, macro bars, per-meal protein, fiber, BMI/BF% bands, safety warnings)
-- ✅ 1.4 Open Food Facts integration (search + barcode scan) — `foods` cache table with RLS, debounced live search, camera-based barcode scanner, food detail screen with per-100g + per-serving nutrition
-- ✅ 1.5 Food logging with live totals — `food_logs` table with full RLS, quantity+meal logging form (suggested-slot-from-time), today's log screen, "Today so far" progress bars on dashboard
-- ✅ 1.6 Diet-plan generator — 16 hand-curated meal templates (Indian + Western), scaled per-meal to fit user's target macros via weighted-distance ranking
-- ✅ 1.7 History view — last 7 days with daily totals and on-target / over / under coloring
+- ✅ 1.1 Onboarding — single scrollable form (age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) → Supabase `profiles` table with full RLS
+- ✅ 1.2 Science engine — Layer 1 of `docs/METHODOLOGY.md` (FuelWise v8.20 derived): persona × goal matrix, MSJ/HB/KM BMR, calorie caps 25%/40%/20%, per-meal protein age-graded, fiber 14 g/1000 kcal, activity-graded carb floors, BMI / BF% bands (incl. Asian). 100 / 100 unit tests with worked examples.
+- ✅ 1.3 Results dashboard — calorie target, macro bars, per-meal protein, fiber, BMI / BF% bands, safety warnings filtered to actionable only
+- ✅ 1.4 Open Food Facts integration — search + barcode scan via `expo-camera`; `foods` cache table with RLS; bundled common-foods staples library (62 generic foods) merged into search; clean scanner error UX
+- ✅ 1.5 Food logging — `food_logs` table with full RLS; logging form with auto-suggested meal slot from time-of-day; today's totals on dashboard with progress bars; today's log screen grouped by meal with delete
+- ✅ 1.6 Diet-plan generator — 16 hand-curated meal templates (Indian + Western), scaled per-meal to the user's macros via weighted-distance ranking; one tab in the app
+- ✅ 1.7 History view — last 7 days with daily totals + on-target / over / under colour pills
 
-## Phase 2 — Workout + in-gym player + local audio
-- ⬜ 2.1 Exercise library
-- ⬜ 2.2 Routine generator
-- ⬜ 2.3 Equipment customization
-- ⬜ 2.4 Weekly split
-- ⬜ 2.5 In-gym Workout Player
-- ⬜ 2.6 Local audio trigger
+**Phase 1 extras (delivered on top of the master prompt spec):**
+- Bottom tab bar navigation (Home / Log / Plan / Profile)
+- Common-foods staples library (Indian + Western, 62 items)
 
-## Phase 3 — Cost + streaming + freemium
-- ⬜ 3.1 Cost of eating (community prices)
-- ⬜ 3.2 Spotify + Apple MusicKit
-- ⬜ 3.3 RevenueCat
+## Phase 2 — Workout + in-gym player + local audio  ⬜ (start here next)
+- ⬜ 2.1 Exercise library from an open exercise dataset (master prompt § 10 suggests wger / public-domain GitHub source) with muscle groups, equipment, difficulty, instructions, media
+- ⬜ 2.2 Routine generator by experience level (beginner / intermediate / advanced) per master prompt § 3.7 — ACSM + ISSN backed, full-body / upper-lower / PPL
+- ⬜ 2.3 Equipment customization — user marks available equipment, routine adapts (filter / substitute)
+- ⬜ 2.4 Weekly split assignment (day-based: Monday routine, Tuesday routine, …)
+- ⬜ 2.5 In-gym Workout Player — guided set-by-set; auto rest timer; auto-log weight/reps; suggest next-session progression (small weight or rep increases when last session's targets hit). Use RIR as the effort cue. Zero manual math.
+- ⬜ 2.6 Local audio trigger — user uploads a song (e.g. phonk) and assigns it to an exercise; auto-plays on rest-timer-end → next-set-start transition. Files in Supabase Storage, played via `expo-av`.
+
+Master prompt direction: **ship Phase 2 to TestFlight / Play internal testing before starting Phase 3.**
+
+## Phase 3 — Cost tracking + streaming music + freemium  ⬜
+- ⬜ 3.1 Cost of eating — daily / monthly food spend with community-priced fallback model per master prompt § 9
+- ⬜ 3.2 Streaming music — Spotify SDK + Apple MusicKit (caveat: iOS background-audio limits make local audio the dependable default)
+- ⬜ 3.3 Freemium via RevenueCat
+
+## Phase 4+ — Scale & moat  ⬜
+Community / social, AI coach (LLM-assisted plans), wearable / IoT integrations, advanced analytics. Architected for in the data model now (clean tables, edge functions later) so they slot in cleanly.
+
+---
+
+## Database migrations applied (production)
+
+In numeric order, all live on `eeltroiupbgfgldburra.supabase.co`:
+
+| File | Purpose | Phase |
+|---|---|---|
+| `0001_profiles.sql` | User profile + RLS + auto-create trigger on signup | 1.1 |
+| `0002_foods.sql` | Global foods catalog cache + RLS | 1.4 |
+| `0003_food_logs.sql` | Per-user food logs + RLS (full CRUD on own rows) | 1.5 |
+
+Phase 2 will add new migration files (`0004_exercises.sql`, `0005_routines.sql`, etc.) per the schema sketch in `docs/DATA_MODEL.md` § "Phase 2 — Training".
