@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { Pressable, View } from 'react-native';
-import { router } from 'expo-router';
+import { View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/Card';
@@ -8,7 +7,7 @@ import { useProfile } from '@/store/profile';
 import { generatePlan, splitDailyTargets } from '@/features/plan/generator';
 import { t } from '@/i18n/strings';
 
-export default function MealPlan() {
+export default function PlanTab() {
   const profile = useProfile((s) => s.profile);
 
   const plan = useMemo(() => {
@@ -46,17 +45,9 @@ export default function MealPlan() {
 
   return (
     <Screen scroll className="gap-5">
-      <View className="flex-row items-start justify-between mt-2">
-        <View className="flex-1">
-          <Text variant="h1">{t('plan.title')}</Text>
-          <Text variant="caption">{t('plan.subtitle')}</Text>
-        </View>
-        <Pressable
-          onPress={() => router.back()}
-          className="px-3 py-2 rounded-md bg-bg-surface border border-border"
-        >
-          <Text variant="caption">{t('foods.backToSearch')}</Text>
-        </Pressable>
+      <View className="mt-4 gap-1">
+        <Text variant="h1">{t('plan.title')}</Text>
+        <Text variant="caption">{t('plan.subtitle')}</Text>
       </View>
 
       {plan.map((meal) => (

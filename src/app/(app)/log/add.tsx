@@ -98,7 +98,7 @@ export default function AddLog() {
         fatG: Math.round(preview.fatG * 10) / 10,
         fiberG: preview.fiberG === null ? null : Math.round(preview.fiberG * 10) / 10,
       });
-      router.replace('/(app)/log/today');
+      router.replace('/(app)/(tabs)/log');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

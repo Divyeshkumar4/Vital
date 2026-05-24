@@ -8,7 +8,6 @@ import { Card } from '@/components/Card';
 import { deleteLog, getLogsForDate } from '@/features/log/queries';
 import { MEAL_SLOTS, sumLogs, todayISO, type FoodLog, type MealSlot } from '@/features/log/types';
 import { useAuth } from '@/store/auth';
-import { useProfile } from '@/store/profile';
 import { t } from '@/i18n/strings';
 
 function MealSection({
@@ -58,9 +57,8 @@ function MealSection({
   );
 }
 
-export default function TodayLog() {
+export default function LogTab() {
   const user = useAuth((s) => s.user);
-  const profile = useProfile((s) => s.profile);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +81,6 @@ export default function TodayLog() {
     load();
   }, [load]);
 
-  // Refetch whenever the screen regains focus (e.g. coming back from logging).
   useFocusEffect(
     useCallback(() => {
       load();
@@ -103,24 +100,12 @@ export default function TodayLog() {
 
   return (
     <Screen scroll className="gap-5">
-      <View className="flex-row items-start justify-between mt-2">
-        <View className="flex-1">
-          <Text variant="caption">{t('log.todayTitle')}</Text>
-          <Text variant="h1">{Math.round(totals.kcal)} kcal</Text>
-          <Text variant="caption">
-            P {totals.proteinG.toFixed(0)} · C {totals.carbsG.toFixed(0)} · F{' '}
-            {totals.fatG.toFixed(0)}
-            {profile?.targetCalories
-              ? ` · ${t('dashboard.title').toLowerCase()} ${profile.targetCalories} kcal`
-              : ''}
-          </Text>
-        </View>
-        <Pressable
-          onPress={() => router.back()}
-          className="px-3 py-2 rounded-md bg-bg-surface border border-border"
-        >
-          <Text variant="caption">{t('foods.backToSearch')}</Text>
-        </Pressable>
+      <View className="mt-4 gap-1">
+        <Text variant="caption">{t('log.todayTitle')}</Text>
+        <Text variant="h1">{Math.round(totals.kcal)} kcal</Text>
+        <Text variant="caption">
+          P {totals.proteinG.toFixed(0)} · C {totals.carbsG.toFixed(0)} · F {totals.fatG.toFixed(0)}
+        </Text>
       </View>
 
       {error ? (
@@ -151,6 +136,12 @@ export default function TodayLog() {
           <Button title={t('dashboard.startLogging')} onPress={() => router.push('/(app)/foods/search')} />
         </>
       )}
+
+      <Button
+        title={t('dashboard.viewHistory')}
+        variant="secondary"
+        onPress={() => router.push('/(app)/log/history')}
+      />
     </Screen>
   );
 }
