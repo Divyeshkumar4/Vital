@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,11 +6,17 @@ import { Text } from '@/components/Text';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { searchFoods, type OffFood } from '@/lib/api/openFoodFacts';
-import { cacheFood, offFoodToInsert } from '@/features/food/queries';
+import { searchStaples } from '@/lib/api/staples';
+import { cacheFood, offFoodToInsert, stapleToInsert } from '@/features/food/queries';
 import { t } from '@/i18n/strings';
 
-const MIN_QUERY = 3;
+const MIN_OFF_QUERY = 3;
 const DEBOUNCE_MS = 350;
+
+type ResultItem = {
+  kind: 'staple' | 'off';
+  data: OffFood;
+};
 
 function macroLine(f: OffFood): string {
   const parts: string[] = [];
@@ -23,43 +29,60 @@ function macroLine(f: OffFood): string {
 
 export default function FoodSearch() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<OffFood[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [staples, setStaples] = useState<OffFood[]>([]);
+  const [offResults, setOffResults] = useState<OffFood[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [picking, setPicking] = useState<string | null>(null);
   const reqIdRef = useRef(0);
 
+  // Local staples — instant, no debounce needed.
+  useEffect(() => {
+    setStaples(searchStaples(query, 12));
+  }, [query]);
+
+  // Open Food Facts — debounced, only above the min query length.
   useEffect(() => {
     setError(null);
-    if (query.trim().length < MIN_QUERY) {
-      setResults([]);
-      setLoading(false);
+    if (query.trim().length < MIN_OFF_QUERY) {
+      setOffResults([]);
+      setOffLoading(false);
       return;
     }
     const id = ++reqIdRef.current;
-    setLoading(true);
+    setOffLoading(true);
     const handle = setTimeout(async () => {
       try {
         const r = await searchFoods(query, 20);
         if (reqIdRef.current === id) {
-          setResults(r);
-          setLoading(false);
+          setOffResults(r);
+          setOffLoading(false);
         }
       } catch (e) {
         if (reqIdRef.current === id) {
           setError(e instanceof Error ? e.message : String(e));
-          setLoading(false);
+          setOffLoading(false);
         }
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(handle);
   }, [query]);
 
-  const onPick = async (food: OffFood) => {
-    setPicking(food.sourceId);
+  const items: ResultItem[] = useMemo(
+    () => [
+      ...staples.map((s): ResultItem => ({ kind: 'staple', data: s })),
+      ...offResults.map((o): ResultItem => ({ kind: 'off', data: o })),
+    ],
+    [staples, offResults],
+  );
+
+  const onPick = async (item: ResultItem) => {
+    setPicking(`${item.kind}:${item.data.sourceId}`);
     setError(null);
     try {
-      const saved = await cacheFood(offFoodToInsert(food));
+      const insert =
+        item.kind === 'staple' ? stapleToInsert(item.data) : offFoodToInsert(item.data);
+      const saved = await cacheFood(insert);
       router.push({ pathname: '/(app)/foods/[id]', params: { id: saved.id } });
     } catch (e) {
       setError(e instanceof Error ? e.message : t('foods.saveError'));
@@ -68,12 +91,22 @@ export default function FoodSearch() {
     }
   };
 
+  const showHint = query.trim().length === 0;
+  const showEmpty =
+    !offLoading &&
+    !showHint &&
+    items.length === 0 &&
+    !error;
+
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <View className="px-6 pt-4 pb-2 gap-3">
         <View className="flex-row items-center justify-between">
           <Text variant="h1">{t('foods.findTitle')}</Text>
-          <Pressable onPress={() => router.back()} className="px-3 py-2 rounded-md bg-bg-surface border border-border">
+          <Pressable
+            onPress={() => router.back()}
+            className="px-3 py-2 rounded-md bg-bg-surface border border-border"
+          >
             <Text variant="caption">{t('common.cancel')}</Text>
           </Pressable>
         </View>
@@ -91,8 +124,8 @@ export default function FoodSearch() {
         />
       </View>
 
-      {loading ? (
-        <View className="px-6 py-4 flex-row gap-2 items-center">
+      {offLoading ? (
+        <View className="px-6 py-3 flex-row gap-2 items-center">
           <ActivityIndicator />
           <Text variant="caption">{t('foods.searching')}</Text>
         </View>
@@ -106,24 +139,25 @@ export default function FoodSearch() {
         </View>
       ) : null}
 
-      {!loading && query.trim().length < MIN_QUERY ? (
-        <View className="px-6 py-6">
+      {showHint ? (
+        <View className="px-6 py-4">
           <Text variant="caption">{t('foods.enterSearch')}</Text>
         </View>
       ) : null}
 
-      {!loading && query.trim().length >= MIN_QUERY && results.length === 0 && !error ? (
-        <View className="px-6 py-6">
+      {showEmpty ? (
+        <View className="px-6 py-4">
           <Text variant="caption">{t('foods.noResults')}</Text>
         </View>
       ) : null}
 
       <FlatList
-        data={results}
-        keyExtractor={(it) => `${it.sourceId}`}
+        data={items}
+        keyExtractor={(it) => `${it.kind}:${it.data.sourceId}`}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32, gap: 12 }}
         renderItem={({ item }) => {
-          const isPicking = picking === item.sourceId;
+          const key = `${item.kind}:${item.data.sourceId}`;
+          const isPicking = picking === key;
           return (
             <Pressable
               onPress={() => onPick(item)}
@@ -133,26 +167,26 @@ export default function FoodSearch() {
                 isPicking ? 'opacity-60' : ''
               }`}
             >
-              {item.imageUrl ? (
+              {item.data.imageUrl ? (
                 <Image
-                  source={{ uri: item.imageUrl }}
+                  source={{ uri: item.data.imageUrl }}
                   style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: '#222B38' }}
                 />
               ) : (
                 <View className="w-14 h-14 rounded-md bg-bg-elevated items-center justify-center">
-                  <Text variant="caption">—</Text>
+                  <Text variant="caption">{item.kind === 'staple' ? 'Common' : '—'}</Text>
                 </View>
               )}
               <View className="flex-1 gap-1">
                 <Text variant="body" numberOfLines={2}>
-                  {item.name}
+                  {item.data.name}
                 </Text>
-                {item.brand ? (
+                {item.data.brand ? (
                   <Text variant="caption" numberOfLines={1}>
-                    {item.brand}
+                    {item.data.brand}
                   </Text>
                 ) : null}
-                <Text variant="caption">{macroLine(item)}</Text>
+                <Text variant="caption">{macroLine(item.data)}</Text>
               </View>
               {isPicking ? <ActivityIndicator /> : null}
             </Pressable>

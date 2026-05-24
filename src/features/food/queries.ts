@@ -57,6 +57,28 @@ export function offFoodToInsert(o: OffFood): FoodInsert {
 }
 
 /**
+ * Staples library entries use the OffFood shape for display but are sourced
+ * from USDA / standard nutrition references — tagged `source = 'usda'`.
+ */
+export function stapleToInsert(o: OffFood): FoodInsert {
+  return {
+    source: 'usda',
+    sourceId: o.sourceId,
+    name: o.name,
+    brand: o.brand,
+    barcode: o.barcode,
+    kcalPer100g: o.kcalPer100g,
+    proteinPer100g: o.proteinPer100g,
+    carbsPer100g: o.carbsPer100g,
+    fatPer100g: o.fatPer100g,
+    fiberPer100g: o.fiberPer100g,
+    servingSizeG: o.servingSizeG,
+    servingLabel: o.servingLabel,
+    imageUrl: o.imageUrl,
+  };
+}
+
+/**
  * Cache a food row keyed by (source, source_id). If the row already exists
  * returns the existing row unchanged - we never UPDATE because foods is a
  * global catalog and the RLS policy only grants INSERT to authenticated
