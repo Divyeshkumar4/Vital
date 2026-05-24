@@ -56,9 +56,26 @@ export function offFoodToInsert(o: OffFood): FoodInsert {
   };
 }
 
-/** Upsert a food row keyed by (source, source_id). Returns the canonical cached row. */
+/**
+ * Cache a food row keyed by (source, source_id). If the row already exists
+ * returns the existing row unchanged - we never UPDATE because foods is a
+ * global catalog and the RLS policy only grants INSERT to authenticated
+ * users (deliberate; first writer wins for cached external data).
+ */
 export async function cacheFood(food: FoodInsert): Promise<Food> {
   if (!supabase) throw new Error('Supabase is not configured.');
+
+  // 1. Fast path: row already cached for this (source, source_id).
+  const { data: existing, error: selectError } = await supabase
+    .from('foods')
+    .select('*')
+    .eq('source', food.source)
+    .eq('source_id', food.sourceId)
+    .maybeSingle();
+  if (selectError) throw selectError;
+  if (existing) return rowToFood(existing as FoodRow);
+
+  // 2. Not cached - insert it.
   const row = {
     source: food.source,
     source_id: food.sourceId,
@@ -74,13 +91,27 @@ export async function cacheFood(food: FoodInsert): Promise<Food> {
     serving_label: food.servingLabel,
     image_url: food.imageUrl,
   };
-  const { data, error } = await supabase
+  const { data: inserted, error: insertError } = await supabase
     .from('foods')
-    .upsert(row, { onConflict: 'source,source_id' })
+    .insert(row)
     .select('*')
     .single();
-  if (error) throw error;
-  return rowToFood(data as FoodRow);
+  if (!insertError && inserted) return rowToFood(inserted as FoodRow);
+
+  // 3. Race: another client inserted the same (source, source_id) between
+  //    our SELECT and INSERT. Re-fetch and return that row.
+  if (insertError && insertError.code === '23505') {
+    const { data: raced, error: racedError } = await supabase
+      .from('foods')
+      .select('*')
+      .eq('source', food.source)
+      .eq('source_id', food.sourceId)
+      .single();
+    if (racedError) throw racedError;
+    return rowToFood(raced as FoodRow);
+  }
+
+  throw insertError ?? new Error('Failed to cache food.');
 }
 
 export async function getFoodById(id: string): Promise<Food | null> {

@@ -83,17 +83,17 @@ export default function FoodScan() {
     );
   }
 
-  // The camera stops listening for scans whenever a lookup is in-flight OR an
-  // error banner is showing. The user must tap the error to resume scanning.
-  const scanGated = lookingUp || error !== null;
-
+  // The camera only stops listening while a lookup is actually in flight.
+  // The `lastScannedRef` check inside `onScanned` blocks re-firing the SAME
+  // failed barcode (no error flicker). Pointing at a different barcode clears
+  // the previous error and starts a new lookup automatically.
   return (
     <View className="flex-1 bg-black">
       <CameraView
         style={{ flex: 1 }}
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: [...BARCODE_TYPES] }}
-        onBarcodeScanned={scanGated ? undefined : onScanned}
+        onBarcodeScanned={lookingUp ? undefined : onScanned}
       />
 
       <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
