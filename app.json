@@ -10,11 +10,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vital.app",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "We use the camera to scan food barcodes so you don't have to type product info by hand."
+      }
     },
     "android": {
       "package": "com.vital.app",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["android.permission.CAMERA"]
     },
     "web": {
       "bundler": "metro",
@@ -22,7 +26,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "We use the camera to scan food barcodes so you don't have to type product info by hand."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

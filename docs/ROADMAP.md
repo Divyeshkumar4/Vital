@@ -15,6 +15,7 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 - ✅ 1.1 Onboarding (single scrollable form: age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) + Supabase `profiles` table with RLS
 - ✅ 1.2 Science engine (FuelWise v8.20 Layer 1 methodology adopted — persona × goal matrix, BMR variants, calorie caps, per-meal protein, fiber, BF/BMI bands; 100/100 unit tests pass)
 - ✅ 1.3 Results dashboard (calorie target, macro bars, per-meal protein, fiber, BMI/BF% bands, safety warnings)
+- ✅ 1.4 Open Food Facts integration (search + barcode scan) — `foods` cache table with RLS, debounced live search, camera-based barcode scanner, food detail screen with per-100g + per-serving nutrition
 - ⬜ 1.4 Open Food Facts integration (search + barcode)
 - ⬜ 1.5 Food logging with live totals
 - ⬜ 1.6 Diet-plan generator

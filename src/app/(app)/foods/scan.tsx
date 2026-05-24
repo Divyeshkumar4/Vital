@@ -1,0 +1,137 @@
+import { useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, View } from 'react-native';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Text } from '@/components/Text';
+import { Button } from '@/components/Button';
+import { lookupBarcode } from '@/lib/api/openFoodFacts';
+import { cacheFood, offFoodToInsert } from '@/features/food/queries';
+import { t } from '@/i18n/strings';
+
+const BARCODE_TYPES = [
+  'ean13',
+  'ean8',
+  'upc_a',
+  'upc_e',
+  'code128',
+  'code39',
+  'code93',
+  'qr',
+] as const;
+
+export default function FoodScan() {
+  const [permission, requestPermission] = useCameraPermissions();
+  const [lookingUp, setLookingUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const scannedRef = useRef<string | null>(null);
+
+  const onScanned = async ({ data }: { data: string }) => {
+    if (lookingUp || scannedRef.current === data) return;
+    scannedRef.current = data;
+    setError(null);
+    setLookingUp(true);
+    try {
+      const off = await lookupBarcode(data);
+      if (!off) {
+        setError(t('foods.scanNotFound'));
+        setLookingUp(false);
+        // Allow rescanning the same barcode after a moment.
+        setTimeout(() => {
+          scannedRef.current = null;
+        }, 2000);
+        return;
+      }
+      const saved = await cacheFood(offFoodToInsert(off));
+      router.replace({ pathname: '/(app)/foods/[id]', params: { id: saved.id } });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('foods.scanError'));
+      setLookingUp(false);
+      setTimeout(() => {
+        scannedRef.current = null;
+      }, 2000);
+    }
+  };
+
+  if (!permission) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg items-center justify-center">
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <SafeAreaView className="flex-1 bg-bg">
+        <View className="p-6 gap-4 mt-8">
+          <Text variant="h1">{t('foods.scanBarcode')}</Text>
+          <Text variant="caption">{t('foods.scanPermission')}</Text>
+          <Button title={t('foods.scanPermissionGrant')} onPress={requestPermission} />
+          <Button title={t('foods.backToSearch')} variant="secondary" onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-black">
+      <CameraView
+        style={{ flex: 1 }}
+        facing="back"
+        barcodeScannerSettings={{ barcodeTypes: [...BARCODE_TYPES] }}
+        onBarcodeScanned={lookingUp ? undefined : onScanned}
+      />
+
+      <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+        <View className="px-6 pt-2 pb-3 flex-row items-center justify-between">
+          <Pressable
+            onPress={() => router.back()}
+            className="px-3 py-2 rounded-md bg-black/60 border border-white/20"
+          >
+            <Text variant="caption">{t('common.cancel')}</Text>
+          </Pressable>
+          <View className="px-3 py-2 rounded-md bg-black/60 border border-white/20">
+            <Text variant="caption">{t('foods.scanTitle')}</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '10%',
+          right: '10%',
+          height: 180,
+          borderWidth: 2,
+          borderColor: '#5BE49B',
+          borderRadius: 16,
+          backgroundColor: 'transparent',
+        }}
+      />
+
+      <SafeAreaView style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <View className="px-6 py-4 gap-2">
+          {lookingUp ? (
+            <View className="flex-row gap-2 items-center px-4 py-3 rounded-md bg-black/60 border border-white/20">
+              <ActivityIndicator />
+              <Text variant="caption">{t('foods.scanLooking')}</Text>
+            </View>
+          ) : null}
+          {error ? (
+            <View className="px-4 py-3 rounded-md bg-black/60 border border-danger">
+              <Text variant="caption" className="text-danger">
+                {error}
+              </Text>
+            </View>
+          ) : null}
+          <View className="px-4 py-3 rounded-md bg-black/60 border border-white/20">
+            <Text variant="caption">{t('foods.scanHelp')}</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}

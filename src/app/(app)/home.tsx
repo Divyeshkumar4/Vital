@@ -232,9 +232,8 @@ export default function Home() {
           onPress={() => router.push('/(app)/onboarding')}
         />
         <Button
-          title={`${t('dashboard.startLogging')} — ${t('dashboard.startLoggingComing')}`}
-          variant="ghost"
-          disabled
+          title={t('dashboard.startLogging')}
+          onPress={() => router.push('/(app)/foods/search')}
         />
       </View>
 
