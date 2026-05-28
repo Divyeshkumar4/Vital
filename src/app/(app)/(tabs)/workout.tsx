@@ -5,6 +5,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { Pill } from '@/components/Pill';
 import { useAuth } from '@/store/auth';
 import { getActiveRoutine } from '@/features/workout/queries';
 import type { RoutineFull } from '@/features/workout/types';
@@ -83,13 +84,16 @@ export default function WorkoutTab() {
         </Card>
       ) : (
         <>
-          <Card title={t('workout.todayTitle')}>
+          <Card>
+            <View className="flex-row items-baseline justify-between">
+              <Text variant="caption">{t('workout.todayTitle')}</Text>
+              {todayDay ? (
+                <Pill label="" value={`${todayDay.exercises.length} ${t('workout.exercises')}`} tone="info" />
+              ) : null}
+            </View>
             {todayDay ? (
               <>
                 <Text variant="h2">{todayDay.name}</Text>
-                <Text variant="caption">
-                  {todayDay.exercises.length} {t('workout.exercises')}
-                </Text>
                 <View className="border-t border-border pt-3 gap-1">
                   {todayDay.exercises.map((ex) => (
                     <Text key={ex.id} variant="caption">
@@ -109,7 +113,7 @@ export default function WorkoutTab() {
                 />
               </>
             ) : (
-              <Text variant="body">{t('workout.noTodayWorkout')}</Text>
+              <Text variant="body">Rest day. Recovery is when growth happens.</Text>
             )}
           </Card>
 

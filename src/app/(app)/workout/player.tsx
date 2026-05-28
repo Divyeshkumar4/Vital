@@ -5,7 +5,9 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { NumberField } from '@/components/NumberField';
+import { Stepper } from '@/components/Stepper';
+import { Pill } from '@/components/Pill';
+import { CircularProgress } from '@/components/CircularProgress';
 import { useAuth } from '@/store/auth';
 import {
   finishWorkout,
@@ -17,6 +19,7 @@ import {
 import type { RoutineExercise, RoutineFull, SetLog } from '@/features/workout/types';
 import { exerciseById } from '@/lib/api/exercises';
 import { suggestProgression, type PreviousSet } from '@/lib/science/workout';
+import { tokens } from '@/lib/design/tokens';
 import { t } from '@/i18n/strings';
 
 interface CurrentExerciseState {
@@ -28,11 +31,17 @@ interface CurrentExerciseState {
   suggestionReason: 'first_session' | 'hold' | 'add_reps' | 'add_weight';
 }
 
-function suggestionLine(state: CurrentExerciseState): string {
-  if (state.suggestionReason === 'first_session') return t('workout.playerReasonFirst');
-  if (state.suggestionReason === 'add_weight') return t('workout.playerReasonAddWeight');
-  if (state.suggestionReason === 'add_reps') return t('workout.playerReasonAddReps');
+function suggestionLine(reason: CurrentExerciseState['suggestionReason']): string {
+  if (reason === 'first_session') return t('workout.playerReasonFirst');
+  if (reason === 'add_weight') return t('workout.playerReasonAddWeight');
+  if (reason === 'add_reps') return t('workout.playerReasonAddReps');
   return t('workout.playerReasonHold');
+}
+
+interface CompletedSet {
+  setIndex: number;
+  weightKg: number | null;
+  reps: number | null;
 }
 
 export default function WorkoutPlayer() {
@@ -45,17 +54,19 @@ export default function WorkoutPlayer() {
   const [workoutLogId, setWorkoutLogId] = useState<string | null>(null);
 
   const [exerciseIdx, setExerciseIdx] = useState(0);
-  const [setIdx, setSetIdx] = useState(0); // 0-based; "Set 1 of 3" displays as setIdx+1
+  const [setIdx, setSetIdx] = useState(0);
   const [weightStr, setWeightStr] = useState('');
   const [repsStr, setRepsStr] = useState('');
   const [rirStr, setRirStr] = useState('');
+  const [completedSets, setCompletedSets] = useState<CompletedSet[]>([]);
 
   const [restRemaining, setRestRemaining] = useState(0);
+  const [restTotal, setRestTotal] = useState(0);
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [currentState, setCurrentState] = useState<CurrentExerciseState | null>(null);
 
-  // 1. Load routine + day + start workout log.
+  // Load routine + start workout log.
   useEffect(() => {
     if (!user || !dayId) return;
     let cancelled = false;
@@ -104,7 +115,7 @@ export default function WorkoutPlayer() {
 
   const exercise = day?.exercises[exerciseIdx];
 
-  // 2. When the current exercise changes, fetch its last session and seed the inputs.
+  // When exercise changes, fetch its last session + seed inputs.
   useEffect(() => {
     if (!user || !exercise) return;
     let cancelled = false;
@@ -121,19 +132,19 @@ export default function WorkoutPlayer() {
           rir: s.rir,
         }));
         const sug = suggestProgression(prev, targetReps, isCompound);
-        const state: CurrentExerciseState = {
+        setCurrentState({
           routineExercise: exercise,
           isCompound,
           history,
           suggestedWeight: sug.weightKg,
           suggestedReps: sug.reps,
           suggestionReason: sug.reason,
-        };
-        setCurrentState(state);
+        });
         setWeightStr(sug.weightKg > 0 ? String(sug.weightKg) : '');
         setRepsStr(String(sug.reps));
         setRirStr(exercise.targetRir !== null ? String(exercise.targetRir) : '');
         setSetIdx(0);
+        setCompletedSets([]);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : String(e));
@@ -144,7 +155,7 @@ export default function WorkoutPlayer() {
     };
   }, [user, exercise]);
 
-  // Rest timer countdown.
+  // Rest timer.
   useEffect(() => {
     if (restRemaining <= 0) {
       if (restRef.current) {
@@ -166,7 +177,6 @@ export default function WorkoutPlayer() {
     };
   }, [restRemaining]);
 
-  // Clean up timer on unmount.
   useEffect(
     () => () => {
       if (restRef.current) clearInterval(restRef.current);
@@ -195,14 +205,18 @@ export default function WorkoutPlayer() {
         reps,
         rir,
       });
-      // Advance.
+      setCompletedSets((prev) => [
+        ...prev,
+        { setIndex: setIdx + 1, weightKg: Number.isFinite(weight) ? weight : null, reps },
+      ]);
       const nextSetIdx = setIdx + 1;
       if (nextSetIdx < exercise.targetSets) {
         setSetIdx(nextSetIdx);
+        setRestTotal(exercise.restSec);
         setRestRemaining(exercise.restSec);
       } else {
-        // All sets done for this exercise. Move on or wait for "Next exercise" tap.
         setRestRemaining(0);
+        setRestTotal(0);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -218,6 +232,7 @@ export default function WorkoutPlayer() {
     }
     setExerciseIdx(nextIdx);
     setRestRemaining(0);
+    setRestTotal(0);
   };
 
   const onFinish = useCallback(async () => {
@@ -228,7 +243,6 @@ export default function WorkoutPlayer() {
     try {
       await finishWorkout(workoutLogId);
     } catch (e) {
-      // Non-fatal — log was created; just navigate away.
       setError(e instanceof Error ? e.message : String(e));
     }
     router.replace('/(app)/(tabs)/workout');
@@ -271,101 +285,170 @@ export default function WorkoutPlayer() {
 
   return (
     <Screen scroll className="gap-5">
-      <View className="flex-row justify-between items-start mt-2">
+      {/* Header */}
+      <View className="flex-row items-start justify-between mt-2">
         <View className="flex-1">
-          <Text variant="caption">{day.name}</Text>
-          <Text variant="h2">
-            {exerciseIdx + 1} / {day.exercises.length}
+          <Text variant="caption" className="text-fg-muted">
+            {day.name}  ·  Exercise {exerciseIdx + 1} / {day.exercises.length}
+          </Text>
+          <Text variant="h1">{exercise.exerciseName}</Text>
+          <Text variant="caption" className="text-fg-muted">
+            {exercise.targetSets} × {exercise.targetRepsMin}–{exercise.targetRepsMax} reps
+            {exercise.targetRir !== null ? ` · RIR ${exercise.targetRir}` : ''}
           </Text>
         </View>
         <Pressable
           onPress={onExitConfirm}
+          accessibilityRole="button"
           className="px-3 py-2 rounded-md bg-bg-surface border border-border"
         >
-          <Text variant="caption">{t('workout.playerFinish')}</Text>
+          <Text variant="caption">End</Text>
         </Pressable>
       </View>
 
-      <Card>
-        <Text variant="h1">{exercise.exerciseName}</Text>
-        <Text variant="caption">
-          {exercise.targetSets} × {exercise.targetRepsMin}–{exercise.targetRepsMax} {t('workout.playerRepsUnit')}
-          {exercise.targetRir !== null ? ` · RIR ${exercise.targetRir}` : ''}
-          {' · '}
-          {t('workout.playerRestRemaining')} {exercise.restSec}{t('workout.playerSec')}
-        </Text>
-      </Card>
+      {/* Set tracker dots */}
+      <View className="flex-row gap-2 justify-center">
+        {Array.from({ length: exercise.targetSets }, (_, i) => {
+          const done = completedSets.find((c) => c.setIndex === i + 1);
+          const active = i === setIdx && !allSetsDone;
+          let bg: string = tokens.colors.bg.surface;
+          let border: string = tokens.colors.border.DEFAULT;
+          if (done) {
+            bg = tokens.colors.accent.DEFAULT;
+            border = tokens.colors.accent.DEFAULT;
+          } else if (active) {
+            border = tokens.colors.accent.DEFAULT;
+          }
+          return (
+            <View
+              key={i}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                borderWidth: 2,
+                backgroundColor: bg,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  color: done ? tokens.colors.accent.contrast : tokens.colors.fg.DEFAULT,
+                  fontSize: 14,
+                  fontWeight: '600',
+                }}
+              >
+                {done ? '✓' : i + 1}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
 
+      {/* Rest timer ring (shown only during rest) */}
       {restRemaining > 0 ? (
-        <Card>
-          <Text variant="h2" className="text-accent">
-            {t('workout.playerRestRemaining')}: {restRemaining}{t('workout.playerSec')}
-          </Text>
-          <Button
-            title={t('workout.playerSkipRest')}
-            variant="secondary"
+        <View className="items-center gap-2">
+          <CircularProgress
+            progress={restTotal > 0 ? (restTotal - restRemaining) / restTotal : 0}
+            size={160}
+            strokeWidth={10}
+            color={tokens.colors.info.DEFAULT}
+          >
+            <Text
+              style={{
+                color: tokens.colors.info.DEFAULT,
+                fontSize: 36,
+                fontWeight: '700',
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              {restRemaining}
+            </Text>
+            <Text variant="caption" className="text-fg-muted">
+              rest · sec
+            </Text>
+          </CircularProgress>
+          <Pressable
             onPress={() => setRestRemaining(0)}
-          />
+            className="px-4 py-2 rounded-md bg-bg-surface border border-border"
+          >
+            <Text variant="caption">{t('workout.playerSkipRest')}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* Suggestion */}
+      {!allSetsDone ? (
+        <Card>
+          <View className="flex-row gap-2 items-center flex-wrap">
+            <Pill label={t('workout.playerSuggested')} tone="info" />
+            <Text variant="caption" className="flex-1">
+              {currentState.suggestedWeight > 0
+                ? `${currentState.suggestedWeight} kg × ${currentState.suggestedReps} reps`
+                : `Pick a starting weight you can do ${currentState.suggestedReps} reps with`}
+            </Text>
+          </View>
+          <Text variant="caption" className="text-fg-subtle">
+            {suggestionLine(currentState.suggestionReason)}
+          </Text>
         </Card>
       ) : null}
 
-      <Card
-        title={`${t('workout.playerSet')} ${Math.min(setIdx + 1, exercise.targetSets)} ${t('workout.playerOf')} ${exercise.targetSets}`}
-      >
-        <Text variant="caption">
-          {t('workout.playerSuggested')}: {currentState.suggestedWeight > 0 ? `${currentState.suggestedWeight} ${t('workout.playerKg')} × ` : ''}
-          {currentState.suggestedReps} {t('workout.playerRepsUnit')}
-          {' — '}
-          {suggestionLine(currentState)}
-        </Text>
-
-        <NumberField
-          label={`${t('workout.playerWeight')} (${t('workout.playerKg')})`}
-          value={weightStr}
-          onChangeText={setWeightStr}
-          mode="decimal"
-          suffix={t('workout.playerKg')}
-        />
-        <NumberField
-          label={t('workout.playerReps')}
-          value={repsStr}
-          onChangeText={setRepsStr}
-          mode="integer"
-          suffix={t('workout.playerRepsUnit')}
-        />
-        <NumberField
-          label={t('workout.playerRir')}
-          value={rirStr}
-          onChangeText={setRirStr}
-          mode="integer"
-        />
-
-        {!allSetsDone ? (
+      {/* Inputs */}
+      {!allSetsDone ? (
+        <>
+          <Stepper
+            label={t('workout.playerWeight')}
+            value={weightStr}
+            onChangeText={setWeightStr}
+            step={2.5}
+            mode="decimal"
+            suffix="kg"
+          />
+          <Stepper
+            label={t('workout.playerReps')}
+            value={repsStr}
+            onChangeText={setRepsStr}
+            step={1}
+            mode="integer"
+            suffix="reps"
+          />
+          <Stepper
+            label={t('workout.playerRir')}
+            value={rirStr}
+            onChangeText={setRirStr}
+            step={1}
+            mode="integer"
+            hint="how many reps you had left in the tank"
+          />
           <Button title={t('workout.playerCompleteSet')} onPress={onCompleteSet} />
-        ) : null}
-      </Card>
-
-      {allSetsDone ? (
+        </>
+      ) : (
         <Button
           title={isLastExercise ? t('workout.playerFinish') : t('workout.playerNextExercise')}
           onPress={onNextExercise}
         />
-      ) : null}
+      )}
 
+      {/* Last session reference */}
       {currentState.history.length > 0 ? (
         <Card title={t('workout.playerLastSession')}>
-          {currentState.history.map((s, i) => (
-            <View key={s.id} className="flex-row justify-between">
-              <Text variant="caption">
-                {t('workout.playerSet')} {i + 1}
-              </Text>
-              <Text variant="caption">
-                {s.weightKg !== null ? `${s.weightKg} ${t('workout.playerKg')} × ` : ''}
-                {s.reps ?? '—'} {t('workout.playerRepsUnit')}
-                {s.rir !== null ? ` · RIR ${s.rir}` : ''}
-              </Text>
-            </View>
-          ))}
+          <View className="flex-row flex-wrap gap-2">
+            {currentState.history.map((s) => (
+              <Pill
+                key={s.id}
+                label={`Set ${s.setIndex}`}
+                value={
+                  s.weightKg !== null
+                    ? `${s.weightKg} × ${s.reps ?? '—'}`
+                    : `${s.reps ?? '—'}`
+                }
+                tone="neutral"
+              />
+            ))}
+          </View>
         </Card>
       ) : null}
     </Screen>

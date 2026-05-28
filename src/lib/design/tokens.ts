@@ -23,7 +23,14 @@ export const tokens = {
     accent: {
       DEFAULT: '#5BE49B',
       muted: '#2E8F5C',
+      subtle: '#173027',
       contrast: '#06140C',
+    },
+    info: {
+      DEFAULT: '#38BDF8',
+      muted: '#1A4D6B',
+      subtle: '#0E2939',
+      contrast: '#04121C',
     },
     danger: {
       DEFAULT: '#FF6B6B',
@@ -31,6 +38,7 @@ export const tokens = {
     },
     warn: {
       DEFAULT: '#FFB454',
+      subtle: '#3A2A0F',
     },
   },
   fontFamily: {
