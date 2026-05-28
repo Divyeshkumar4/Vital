@@ -18,10 +18,14 @@ import {
 } from '@/features/workout/queries';
 import {
   assignAudio,
+  countAssignedAudio,
   getExerciseAudio,
   removeExerciseAudio,
   signedUrlForAudio,
 } from '@/features/audio/queries';
+import { useBilling } from '@/store/billing';
+import { Paywall } from '@/components/Paywall';
+import { FREE_LIMITS } from '@/features/billing/types';
 import type { ExerciseAudio } from '@/features/audio/types';
 import { playFromUri, stopPlayback } from '@/lib/audio/playback';
 import * as DocumentPicker from 'expo-document-picker';
@@ -32,11 +36,17 @@ import { tokens } from '@/lib/design/tokens';
 import { t } from '@/i18n/strings';
 
 /**
- * Phase 2.6 Hype-song feature is HIDDEN pending a real-device playback
- * investigation (see DECISIONS 2026-05-24 deferral). The supporting code —
- * migrations/0005, features/audio, lib/audio/playback, exercise_audio table —
- * is intentionally left in place so a future AI can revive the UI when the
- * playback path is confirmed working. Flip this flag to true to re-enable.
+ * Phase 2.6 Hype-song feature is HIDDEN again (2026-05-28, second deferral)
+ * after the founder tested the expo-audio + pre-download fix on a real iPhone
+ * and still got no audible output in Expo Go. See DECISIONS 2026-05-28 second
+ * entry for what was tried and what the next AI should try next (custom dev
+ * client, react-native-track-player, or test on Android first to isolate).
+ *
+ * Supporting code is intentionally left in place — migrations/0005,
+ * src/features/audio/*, src/lib/audio/playback.ts (now on expo-audio), the
+ * exercise_audio table, and the FREE_LIMITS.hypeSongs gate are all wired so
+ * a future AI can revive the UI without re-plumbing anything. Flip this flag
+ * to true to re-enable.
  */
 const HYPE_SONG_ENABLED = false;
 
@@ -65,6 +75,8 @@ interface CompletedSet {
 export default function WorkoutPlayer() {
   const { dayId } = useLocalSearchParams<{ dayId: string }>();
   const user = useAuth((s) => s.user);
+  const isPremium = useBilling((s) => s.isPremium);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const [routineFull, setRoutineFull] = useState<RoutineFull | null>(null);
   const [loading, setLoading] = useState(true);
@@ -224,7 +236,7 @@ export default function WorkoutPlayer() {
     (async () => {
       try {
         const url = await signedUrlForAudio(audio);
-        if (url) await playFromUri(url);
+        if (url) await playFromUri(url, audio.displayName ?? 'hype.mp3');
       } catch {
         setAudioErr(t('workout.audioPlaybackErr'));
       }
@@ -234,6 +246,18 @@ export default function WorkoutPlayer() {
   const onPickAudio = async () => {
     if (!user || !exercise) return;
     setAudioErr(null);
+    // Free tier cap: max FREE_LIMITS.hypeSongs distinct exercises with songs.
+    if (!isPremium && !audio) {
+      try {
+        const existing = await countAssignedAudio(user.id);
+        if (existing >= FREE_LIMITS.hypeSongs) {
+          setShowPaywall(true);
+          return;
+        }
+      } catch {
+        // Non-fatal — if the count check fails, just let the upload proceed.
+      }
+    }
     try {
       const res = await DocumentPicker.getDocumentAsync({
         type: 'audio/*',
@@ -573,6 +597,12 @@ export default function WorkoutPlayer() {
           onPress={onNextExercise}
         />
       )}
+
+      <Paywall
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        reason={`Free tier supports ${FREE_LIMITS.hypeSongs} hype songs. Upgrade for unlimited.`}
+      />
 
       {/* Last session reference */}
       {currentState.history.length > 0 ? (

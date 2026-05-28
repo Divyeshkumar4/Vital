@@ -15,6 +15,8 @@ interface LogRow {
   carbs_g: number;
   fat_g: number;
   fiber_g: number | null;
+  price_at_log: number | null;
+  currency_at_log: string | null;
   created_at: string;
 }
 
@@ -33,6 +35,8 @@ function rowToLog(r: LogRow): FoodLog {
     carbsG: Number(r.carbs_g),
     fatG: Number(r.fat_g),
     fiberG: r.fiber_g === null ? null : Number(r.fiber_g),
+    priceAtLog: r.price_at_log === null ? null : Number(r.price_at_log),
+    currencyAtLog: r.currency_at_log,
     createdAt: r.created_at,
   };
 }
@@ -82,6 +86,8 @@ export async function addLog(input: FoodLogInsert): Promise<FoodLog> {
     carbs_g: input.carbsG,
     fat_g: input.fatG,
     fiber_g: input.fiberG,
+    price_at_log: input.priceAtLog ?? null,
+    currency_at_log: input.currencyAtLog ?? null,
   };
   const { data, error } = await supabase
     .from('food_logs')

@@ -6,8 +6,10 @@ import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Pill } from '@/components/Pill';
+import { Paywall } from '@/components/Paywall';
 import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
+import { useBilling } from '@/store/billing';
 import { compute } from '@/lib/science';
 import type { ScienceInput, ScienceResult } from '@/lib/science';
 import { getActiveRoutine } from '@/features/workout/queries';
@@ -36,7 +38,20 @@ function StatRow({ label, value }: { label: string; value: string }) {
 export default function ProfileTab() {
   const { user, signOut, loading } = useAuth();
   const profile = useProfile((s) => s.profile);
+  const isPremium = useBilling((s) => s.isPremium);
+  const billingLoading = useBilling((s) => s.loading);
+  const cancelPremium = useBilling((s) => s.cancel);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [routine, setRoutine] = useState<RoutineFull | null>(null);
+
+  const onCancel = async () => {
+    if (!user) return;
+    try {
+      await cancelPremium(user.id);
+    } catch {
+      /* surfaced by store */
+    }
+  };
 
   const loadRoutine = useCallback(async () => {
     if (!user) return;
@@ -183,6 +198,33 @@ export default function ProfileTab() {
         )}
       </Card>
 
+      {/* Subscription */}
+      <Card title={t('paywall.title')}>
+        {isPremium ? (
+          <>
+            <View className="flex-row gap-2 items-center">
+              <Pill label="" value="Premium" tone="accent" />
+              <Text variant="caption" className="text-fg-muted">
+                {t('paywall.upgradedSubtitle')}
+              </Text>
+            </View>
+            <Button
+              title={t('paywall.downgrade')}
+              variant="ghost"
+              loading={billingLoading}
+              onPress={onCancel}
+            />
+          </>
+        ) : (
+          <>
+            <Text variant="caption" className="text-fg-muted">
+              {t('paywall.subtitle')}
+            </Text>
+            <Button title={t('paywall.upgrade')} onPress={() => setShowPaywall(true)} />
+          </>
+        )}
+      </Card>
+
       {/* Settings actions */}
       <Card title="Settings">
         <Button
@@ -192,6 +234,8 @@ export default function ProfileTab() {
         />
         <Button title={t('auth.signOut')} variant="ghost" onPress={signOut} loading={loading} />
       </Card>
+
+      <Paywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
 
       <View className="mb-6 gap-1">
         <Text variant="caption" className="text-fg-subtle">

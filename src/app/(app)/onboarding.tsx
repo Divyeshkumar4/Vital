@@ -11,6 +11,7 @@ import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
 import { t } from '@/i18n/strings';
 import { ftInToCm, kgToLb, lbToKg, cmToFtIn } from '@/i18n/units';
+import { currencyForRegion, detectRegion } from '@/lib/locale/region';
 import { compute } from '@/lib/science';
 import type {
   ActivityLevel,
@@ -37,25 +38,44 @@ interface FormState {
   diet: DietPattern;
   excludesEggs: boolean;
   goal: Goal | null;
+  region: string; // ISO 3166-1 alpha-2 or 'GLOBAL'
+  currency: string; // ISO 4217
 }
 
-const emptyForm: FormState = {
-  name: '',
-  ageStr: '',
-  sex: null,
-  units: 'metric',
-  weightStr: '',
-  heightCmStr: '',
-  heightFtStr: '',
-  heightInStr: '',
-  bodyFatStr: '',
-  activity: null,
-  persona: 'general',
-  endurance: false,
-  diet: 'omnivore',
-  excludesEggs: false,
-  goal: null,
-};
+const REGION_OPTIONS: { value: string; label: string }[] = [
+  { value: 'US', label: 'United States · USD' },
+  { value: 'IN', label: 'India · INR' },
+  { value: 'GB', label: 'United Kingdom · GBP' },
+  { value: 'CA', label: 'Canada · CAD' },
+  { value: 'AU', label: 'Australia · AUD' },
+  { value: 'EU', label: 'Eurozone · EUR' },
+  { value: 'GLOBAL', label: 'Other / Global' },
+];
+
+function defaultForm(): FormState {
+  const region = detectRegion() ?? 'GLOBAL';
+  return {
+    name: '',
+    ageStr: '',
+    sex: null,
+    units: 'metric',
+    weightStr: '',
+    heightCmStr: '',
+    heightFtStr: '',
+    heightInStr: '',
+    bodyFatStr: '',
+    activity: null,
+    persona: 'general',
+    endurance: false,
+    diet: 'omnivore',
+    excludesEggs: false,
+    goal: null,
+    region,
+    currency: currencyForRegion(region),
+  };
+}
+
+const emptyForm: FormState = defaultForm();
 
 function parseHeightCm(form: FormState): number | null {
   if (form.units === 'metric') {
@@ -102,6 +122,7 @@ export default function Onboarding() {
         heightInStr = inches.toFixed(0);
       }
     }
+    const region = profile.region ?? detectRegion() ?? 'GLOBAL';
     setForm({
       name: profile.name ?? '',
       ageStr: profile.age?.toString() ?? '',
@@ -118,6 +139,8 @@ export default function Onboarding() {
       diet: profile.dietPattern,
       excludesEggs: profile.excludesEggs ?? false,
       goal: profile.goal,
+      region,
+      currency: profile.currency ?? currencyForRegion(region),
     });
   }, [profile]);
 
@@ -219,6 +242,8 @@ export default function Onboarding() {
         endurance: form.endurance,
         dietPattern: form.diet,
         excludesEggs: form.diet === 'vegetarian' ? form.excludesEggs : false,
+        region: form.region,
+        currency: form.currency,
         deficitPct: form.goal === 'lose' ? 20 : null,
         surplusPct: form.goal === 'gain' ? 10 : null,
         targetCalories: Math.round(finalResult.value.finalCalories),
@@ -396,6 +421,20 @@ export default function Onboarding() {
           ]}
         />
       ) : null}
+
+      <SegmentedChoice
+        label={t('cost.region')}
+        value={form.region}
+        onChange={(v) => {
+          setField('region', v);
+          setField('currency', currencyForRegion(v === 'EU' ? 'DE' : v === 'GLOBAL' ? null : v));
+        }}
+        vertical
+        options={REGION_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+      />
+      <Text variant="caption" className="text-fg-subtle">
+        {t('cost.regionHelp')}
+      </Text>
 
       <SegmentedChoice
         label={t('onboarding.goal')}

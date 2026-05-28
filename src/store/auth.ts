@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import { useProfile } from '@/store/profile';
+import { useBilling } from '@/store/billing';
 
 interface AuthState {
   session: Session | null;
@@ -39,6 +40,7 @@ export const useAuth = create<AuthState>((set) => ({
     set({ loading: true });
     await supabase.auth.signOut();
     useProfile.getState().clear();
+    useBilling.getState().clear();
     set({ session: null, user: null, loading: false });
   },
 }));

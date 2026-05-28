@@ -4,13 +4,18 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/Card';
 import { Pill } from '@/components/Pill';
+import { Paywall } from '@/components/Paywall';
 import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
+import { useBilling } from '@/store/billing';
 import { generatePlan, splitDailyTargets } from '@/features/plan/generator';
 import type { ScaledTemplate } from '@/features/plan/generator';
 import { addLog } from '@/features/log/queries';
 import { todayISO, type MealSlot } from '@/features/log/types';
 import { t } from '@/i18n/strings';
+
+const FREE_SUGGESTIONS_PER_SLOT = 2;
+const PREMIUM_SUGGESTIONS_PER_SLOT = 5;
 
 const MEAL_LABELS: Record<MealSlot, string> = {
   breakfast: t('log.breakfast'),
@@ -22,7 +27,11 @@ const MEAL_LABELS: Record<MealSlot, string> = {
 export default function PlanTab() {
   const user = useAuth((s) => s.user);
   const profile = useProfile((s) => s.profile);
+  const isPremium = useBilling((s) => s.isPremium);
   const [logging, setLogging] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  const perSlot = isPremium ? PREMIUM_SUGGESTIONS_PER_SLOT : FREE_SUGGESTIONS_PER_SLOT;
 
   const plan = useMemo(() => {
     if (
@@ -39,8 +48,8 @@ export default function PlanTab() {
       profile.targetFatG,
       profile.targetCarbsG,
     );
-    return generatePlan(splits, 5);
-  }, [profile]);
+    return generatePlan(splits, perSlot);
+  }, [profile, perSlot]);
 
   const onLogTemplate = async (slot: MealSlot, tmpl: ScaledTemplate) => {
     if (!user) return;
@@ -155,9 +164,25 @@ export default function PlanTab() {
                 </Pressable>
               </View>
             ))}
+            {!isPremium ? (
+              <Pressable
+                onPress={() => setShowPaywall(true)}
+                className="self-start flex-row items-center gap-2"
+              >
+                <Pill label="" value="Premium" tone="accent" />
+                <Text variant="caption" className="text-fg-muted">
+                  See more meal options
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </Card>
       ))}
+      <Paywall
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        reason="Premium unlocks 5 meal options per slot (free is 2)."
+      />
     </Screen>
   );
 }
