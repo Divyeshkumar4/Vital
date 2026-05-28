@@ -32,13 +32,12 @@ import { tokens } from '@/lib/design/tokens';
 import { t } from '@/i18n/strings';
 
 /**
- * Phase 2.6 Hype-song feature is HIDDEN pending a real-device playback
- * investigation (see DECISIONS 2026-05-24 deferral). The supporting code —
- * migrations/0005, features/audio, lib/audio/playback, exercise_audio table —
- * is intentionally left in place so a future AI can revive the UI when the
- * playback path is confirmed working. Flip this flag to true to re-enable.
+ * Phase 2.6 Hype-song feature re-enabled 2026-05-28 after migrating playback
+ * to expo-audio + pre-downloading the file with expo-file-system (see
+ * src/lib/audio/playback.ts). The earlier deferral notes are kept in
+ * docs/DECISIONS.md for context. Founder must verify on a real iPhone.
  */
-const HYPE_SONG_ENABLED = false;
+const HYPE_SONG_ENABLED = true;
 
 interface CurrentExerciseState {
   routineExercise: RoutineExercise;
@@ -224,7 +223,7 @@ export default function WorkoutPlayer() {
     (async () => {
       try {
         const url = await signedUrlForAudio(audio);
-        if (url) await playFromUri(url);
+        if (url) await playFromUri(url, audio.displayName ?? 'hype.mp3');
       } catch {
         setAudioErr(t('workout.audioPlaybackErr'));
       }
