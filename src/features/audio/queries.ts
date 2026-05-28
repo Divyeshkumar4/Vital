@@ -26,6 +26,17 @@ function fromRow(r: Row): ExerciseAudio {
   };
 }
 
+/** How many distinct exercises this user has assigned audio to. */
+export async function countAssignedAudio(userId: string): Promise<number> {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { count, error } = await supabase
+    .from('exercise_audio')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getExerciseAudio(
   userId: string,
   exerciseId: string,

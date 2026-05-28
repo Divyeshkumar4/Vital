@@ -5,8 +5,11 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/Card';
 import { Pill } from '@/components/Pill';
+import { Button } from '@/components/Button';
+import { Paywall } from '@/components/Paywall';
 import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
+import { useBilling } from '@/store/billing';
 import { getLogsForDateRange } from '@/features/log/queries';
 import { isoDaysAgo, type FoodLog } from '@/features/log/types';
 import { sumSpendByDate, type DailySpend } from '@/features/cost/types';
@@ -26,11 +29,18 @@ function formatDate(iso: string): string {
 export default function CostMonth() {
   const user = useAuth((s) => s.user);
   const profile = useProfile((s) => s.profile);
+  const isPremium = useBilling((s) => s.isPremium);
   const currency = profile?.currency ?? 'USD';
 
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  // Open the paywall automatically the first time a non-premium user lands here.
+  useEffect(() => {
+    if (!isPremium) setShowPaywall(true);
+  }, [isPremium]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -77,7 +87,8 @@ export default function CostMonth() {
   const avg = pricedDays > 0 ? monthTotal / pricedDays : 0;
 
   return (
-    <Screen scroll className="gap-5">
+    <>
+      <Screen scroll className="gap-5">
         <View className="flex-row items-start justify-between mt-2">
           <View className="flex-1">
             <Text variant="caption">{t('cost.monthTitle')}</Text>
@@ -131,6 +142,18 @@ export default function CostMonth() {
             ))
         )}
 
-    </Screen>
+        {!isPremium ? (
+          <Button title={t('paywall.upgrade')} onPress={() => setShowPaywall(true)} />
+        ) : null}
+      </Screen>
+      <Paywall
+        visible={showPaywall}
+        onClose={() => {
+          setShowPaywall(false);
+          if (!isPremium) router.back();
+        }}
+        reason={t('cost.monthAccessGated')}
+      />
+    </>
   );
 }

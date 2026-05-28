@@ -18,10 +18,14 @@ import {
 } from '@/features/workout/queries';
 import {
   assignAudio,
+  countAssignedAudio,
   getExerciseAudio,
   removeExerciseAudio,
   signedUrlForAudio,
 } from '@/features/audio/queries';
+import { useBilling } from '@/store/billing';
+import { Paywall } from '@/components/Paywall';
+import { FREE_LIMITS } from '@/features/billing/types';
 import type { ExerciseAudio } from '@/features/audio/types';
 import { playFromUri, stopPlayback } from '@/lib/audio/playback';
 import * as DocumentPicker from 'expo-document-picker';
@@ -64,6 +68,8 @@ interface CompletedSet {
 export default function WorkoutPlayer() {
   const { dayId } = useLocalSearchParams<{ dayId: string }>();
   const user = useAuth((s) => s.user);
+  const isPremium = useBilling((s) => s.isPremium);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const [routineFull, setRoutineFull] = useState<RoutineFull | null>(null);
   const [loading, setLoading] = useState(true);
@@ -233,6 +239,18 @@ export default function WorkoutPlayer() {
   const onPickAudio = async () => {
     if (!user || !exercise) return;
     setAudioErr(null);
+    // Free tier cap: max FREE_LIMITS.hypeSongs distinct exercises with songs.
+    if (!isPremium && !audio) {
+      try {
+        const existing = await countAssignedAudio(user.id);
+        if (existing >= FREE_LIMITS.hypeSongs) {
+          setShowPaywall(true);
+          return;
+        }
+      } catch {
+        // Non-fatal — if the count check fails, just let the upload proceed.
+      }
+    }
     try {
       const res = await DocumentPicker.getDocumentAsync({
         type: 'audio/*',
@@ -572,6 +590,12 @@ export default function WorkoutPlayer() {
           onPress={onNextExercise}
         />
       )}
+
+      <Paywall
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        reason={`Free tier supports ${FREE_LIMITS.hypeSongs} hype songs. Upgrade for unlimited.`}
+      />
 
       {/* Last session reference */}
       {currentState.history.length > 0 ? (
