@@ -250,6 +250,41 @@ The `compute(input)` orchestrator returns:
 
 ---
 
+## 13. Workout programming (Phase 2)
+
+### 13.1 Rep / set / rest schemes
+Mirror of master prompt § 3.7.
+
+| Goal | Reps | Sets | Rest (s) | Target RIR |
+|---|---|---|---|---|
+| Strength | 3–6 | 4 | 180 | 2 |
+| Hypertrophy (default) | 8–12 | 3 | 90 | 2 |
+| Endurance | 12–20 | 3 | 45 | n/a |
+
+Sources: ACSM Guidelines for Exercise Testing & Prescription 11th ed; ISSN position stand on resistance training (Helms et al. 2014 *JISSN*); Schoenfeld 2017 for hypertrophy rep-range equivalence within 5–30 reps when taken close to failure.
+
+### 13.2 Progressive overload
+Implemented in `suggestProgression()` (`src/lib/science/workout.ts`).
+
+Given the user's most recent session of an exercise:
+- **First time** → return target reps at 0 kg; user fills in starting weight.
+- **All sets hit reps + avg RIR ≥ 2** → add **2.5 kg** (compound) or **1.25 kg** (isolation). Keep rep target.
+- **Hit reps but RIR < 2** → hold weight, add **+1 rep** to next session's target.
+- **Missed reps on any set** → hold weight, repeat same target.
+
+Rationale: matches Helms 2014's "double progression" pattern with RIR (Hackett 2012, Zourdos 2016) as the readiness signal. Tiny increments avoid the spiking/stalling that plagues purely linear progression past the novice phase.
+
+### 13.3 Routine templates (Phase 2 generator)
+Three program shapes per `src/features/workout/generator.ts`:
+
+- **Beginner** — 3-day full-body A/B/A. Mon/Wed/Fri default weekdays. Compound emphasis (squat / bench / row / OHP / chin-up / deadlift).
+- **Intermediate** — 4-day upper / lower with power and hypertrophy days. Mon/Tue/Thu/Fri default.
+- **Advanced** — 6-day push / pull / legs with A and B variants. Mon–Sat default.
+
+Each template is goal-aware: the chosen training goal sets the rep range, sets, and rest seconds uniformly across the routine. Equipment customization (master prompt § 2.3) is currently implicit — templates assume gym access (barbell + dumbbell + machines); a future pass will substitute when only a subset of equipment is available.
+
+---
+
 ## Layer 2 roadmap (not in v1)
 
 Architectural placeholders should exist (engine accepts the inputs, returns `null`/skip), but they ship later:

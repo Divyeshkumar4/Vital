@@ -4,7 +4,30 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ---
 
-## ⏳ Handoff state (2026-05-24)
+## ⏳ Handoff state (2026-05-24, updated)
+
+**Phase 2 (workout module) in flight** on branch `claude/phase-2-workouts`. PR not yet open. What's done in this branch:
+
+- `supabase/migrations/0004_workouts.sql` adds 5 tables (routines, routine_days, routine_exercises, workout_logs, set_logs) with full RLS — needs to be applied to the production Supabase project before testing.
+- Bundled exercise library (~60 exercises) in `src/lib/api/exercises.ts`; same pattern as the foods staples library — referenced by stable text id, never persisted to a Supabase exercises table.
+- New workout science layer at `src/lib/science/workout.ts` with `repSchemeForGoal()` (strength / hypertrophy / endurance) and `suggestProgression()` (RIR-aware double-progression). 11 unit tests in `__tests__/workout.test.ts`.
+- Routine generator at `src/features/workout/generator.ts` — three goal-aware templates (beginner full-body / intermediate U-L / advanced PPL).
+- New bottom tab "Workout" (5 tabs total: Home / Log / Workout / Plan / Profile).
+- Workout tab shows today's training day (auto-detected from `Date.getDay()`), week schedule, and a Start CTA.
+- Workout setup screen — pick experience + goal → generates and persists a routine.
+- **Workout player** — guided set-by-set; weight + reps + RIR input prefilled from progression suggestion; rest timer with countdown; auto-advance to next set; "Next exercise" / Finish flow.
+- Home dashboard now also surfaces today's workout card if one is scheduled.
+- METHODOLOGY.md § 13 documents the workout science (rep schemes, progressive overload rules, template shapes).
+
+**Phase 2.6 (local audio trigger) deferred to a separate push** — needs `expo-av` + Supabase Storage setup + real-device iOS background-audio testing.
+
+**Action needed from founder before testing on phone:**
+1. Apply `supabase/migrations/0004_workouts.sql` in the Supabase SQL Editor.
+2. Pull the branch on laptop + reload Expo.
+
+---
+
+## ⏳ Previous handoff state (2026-05-24)
 
 **PR #1** ("Phase 0 + Phase 1: foundation and nutrition core complete") was **squash-merged to `main` as commit [`527dd70`](https://github.com/Divyeshkumar4/Vital/commit/527dd70316db0826492e35ecfd729175f6ea9001)** on 2026-05-24. The feature branch `claude/wizardly-knuth-UeWJ3` is preserved on GitHub with the full 14-commit granular history if any future agent needs to read the work step-by-step.
 
@@ -22,6 +45,7 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ## Decisions in chronological order (newest first)
 
+- 2026-05-24 — Phase 2.1–2.5 in one push: added `0004_workouts.sql` with 5 tables and full RLS (routines, routine_days, routine_exercises, workout_logs, set_logs); curated 60-exercise library in code with stable text ids (no exercises table); workout science layer in `src/lib/science/workout.ts` with rep schemes per goal + RIR-aware double-progression suggestion (11 new tests); routine generator with 3 templates by experience tier (beginner full-body / intermediate U/L / advanced PPL); 5th "Workout" tab; setup screen + in-gym player with rest timer + progression prefill + auto-advance. Phase 2.6 (local audio) deferred to a separate push.
 - 2026-05-24 — Final pre-merge cleanup: rewrote `README.md` to be the AI-orientation entry point (phase status, "for AI agents reading this" reading order, full file map, science workflow); fixed stale `/(app)/home` redirect inside `onboarding.tsx` that survived the tabs refactor.
 - 2026-05-23 — Added bundled common-foods staples library (`src/lib/api/staples.ts`) with 62 generic foods spanning Indian + Western staples (rice/roti/dal/paneer/dosa/poha and chicken/eggs/oats/bread/fruit/veg/dairy/fats/nuts) sourced from USDA FoodData Central + standard Indian references; search now merges local staples (instant, 2-char min) with Open Food Facts (debounced, 3-char min); staples cached under `source = 'usda'`.
 - 2026-05-23 — UX refactor to bottom-tab navigation: added `(app)/(tabs)/` group with Home / Log / Plan / Profile (Ionicons in the bar); slimmed Home to "today only" (progress bars + Find a food); moved BMR/TDEE/macro split/BMI/BF/edit/sign-out to a dedicated Profile tab; modal-style screens (foods/, log/add, log/history, onboarding) live outside `(tabs)/` so the tab bar hides on them.

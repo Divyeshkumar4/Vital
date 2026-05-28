@@ -43,13 +43,13 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 - Bottom tab bar navigation (Home / Log / Plan / Profile)
 - Common-foods staples library (Indian + Western, 62 items)
 
-## Phase 2 — Workout + in-gym player + local audio  ⬜ (start here next)
-- ⬜ 2.1 Exercise library from an open exercise dataset (master prompt § 10 suggests wger / public-domain GitHub source) with muscle groups, equipment, difficulty, instructions, media
-- ⬜ 2.2 Routine generator by experience level (beginner / intermediate / advanced) per master prompt § 3.7 — ACSM + ISSN backed, full-body / upper-lower / PPL
-- ⬜ 2.3 Equipment customization — user marks available equipment, routine adapts (filter / substitute)
-- ⬜ 2.4 Weekly split assignment (day-based: Monday routine, Tuesday routine, …)
-- ⬜ 2.5 In-gym Workout Player — guided set-by-set; auto rest timer; auto-log weight/reps; suggest next-session progression (small weight or rep increases when last session's targets hit). Use RIR as the effort cue. Zero manual math.
-- ⬜ 2.6 Local audio trigger — user uploads a song (e.g. phonk) and assigns it to an exercise; auto-plays on rest-timer-end → next-set-start transition. Files in Supabase Storage, played via `expo-av`.
+## Phase 2 — Workout + in-gym player + local audio  🟡 (in flight on `claude/phase-2-workouts`)
+- ✅ 2.1 Exercise library — 60-exercise curated bundle in `src/lib/api/exercises.ts` with muscle groups / equipment / difficulty / instructions
+- ✅ 2.2 Routine generator — 3 templates (beginner full-body / intermediate U-L / advanced PPL), goal-aware (strength / hypertrophy / endurance) rep schemes via science layer
+- 🟡 2.3 Equipment customization — basic ("training type" + goal) in setup screen; full equipment-availability filtering with substitutions deferred
+- ✅ 2.4 Weekly split assignment — day-based (weekday 0–6) on `routine_days`; tab + dashboard auto-detect today
+- ✅ 2.5 In-gym Workout Player — guided set-by-set with rest timer countdown; RIR-aware progression suggestion prefilled; auto-log weight / reps / RIR; auto-advance to next set; finish-and-end flow
+- ⬜ 2.6 Local audio trigger — user uploads a song and assigns it to an exercise; auto-plays on rest-timer-end → next-set-start transition. Needs `expo-av` + Supabase Storage. **Deferred to a separate push** — real-device iOS background-audio testing needed.
 
 Master prompt direction: **ship Phase 2 to TestFlight / Play internal testing before starting Phase 3.**
 
@@ -72,5 +72,6 @@ In numeric order, all live on `eeltroiupbgfgldburra.supabase.co`:
 | `0001_profiles.sql` | User profile + RLS + auto-create trigger on signup | 1.1 |
 | `0002_foods.sql` | Global foods catalog cache + RLS | 1.4 |
 | `0003_food_logs.sql` | Per-user food logs + RLS (full CRUD on own rows) | 1.5 |
+| `0004_workouts.sql` ⚠️ **not yet applied** | routines + routine_days + routine_exercises + workout_logs + set_logs + RLS | 2.1–2.5 |
 
-Phase 2 will add new migration files (`0004_exercises.sql`, `0005_routines.sql`, etc.) per the schema sketch in `docs/DATA_MODEL.md` § "Phase 2 — Training".
+Phase 2 stores exercises in code (`src/lib/api/exercises.ts`) rather than a Supabase table — referenced from `routine_exercises.exercise_id` by stable text id. User-defined exercises (if ever needed) will go in a separate `user_exercises` table later.

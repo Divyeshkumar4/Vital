@@ -11,6 +11,8 @@ import { compute } from '@/lib/science';
 import type { ScienceInput, ScienceResult } from '@/lib/science';
 import { getLogsForDate } from '@/features/log/queries';
 import { sumLogs, todayISO, type FoodLog } from '@/features/log/types';
+import { getActiveRoutine } from '@/features/workout/queries';
+import type { RoutineFull } from '@/features/workout/types';
 import { t } from '@/i18n/strings';
 
 function ProgressRow({
@@ -57,14 +59,19 @@ export default function Home() {
   const profile = useProfile((s) => s.profile);
 
   const [todayLogs, setTodayLogs] = useState<FoodLog[]>([]);
+  const [routine, setRoutine] = useState<RoutineFull | null>(null);
 
   const loadToday = useCallback(async () => {
     if (!user) return;
     try {
-      const rows = await getLogsForDate(user.id, todayISO());
-      setTodayLogs(rows);
+      const [logs, r] = await Promise.all([
+        getLogsForDate(user.id, todayISO()),
+        getActiveRoutine(user.id),
+      ]);
+      setTodayLogs(logs);
+      setRoutine(r);
     } catch {
-      // Silent — dashboard still works without today's logs.
+      // Silent — dashboard still works without today's data.
     }
   }, [user]);
 
@@ -76,6 +83,11 @@ export default function Home() {
     useCallback(() => {
       loadToday();
     }, [loadToday]),
+  );
+
+  const todayDay = useMemo(
+    () => routine?.days.find((d) => d.weekday === new Date().getDay()) ?? null,
+    [routine],
   );
 
   const result: ScienceResult | null = useMemo(() => {
@@ -163,6 +175,25 @@ export default function Home() {
             title={t('dashboard.startLogging')}
             onPress={() => router.push('/(app)/foods/search')}
           />
+
+          {todayDay ? (
+            <Card title={t('workout.todayTitle')}>
+              <Text variant="h2">{todayDay.name}</Text>
+              <Text variant="caption">
+                {todayDay.exercises.length} {t('workout.exercises')}
+              </Text>
+              <Button
+                title={t('workout.startWorkout')}
+                variant="secondary"
+                onPress={() =>
+                  router.push({
+                    pathname: '/(app)/workout/player',
+                    params: { dayId: todayDay.id },
+                  })
+                }
+              />
+            </Card>
+          ) : null}
 
           {(() => {
             const actionable = result.warnings.filter(
