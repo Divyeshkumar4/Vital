@@ -6,7 +6,7 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ## ⏳ Handoff state (2026-05-24, updated)
 
-**Phase 2 (workout module) complete** on branch `claude/phase-2-workouts` (PR #3). What's in the branch:
+**Phase 2 (workout module) — tasks 2.1–2.5 done, 2.6 (audio) hidden behind a flag pending playback investigation** on branch `claude/phase-2-workouts` (PR #3). What's in the branch:
 
 - `supabase/migrations/0004_workouts.sql` adds 5 tables (routines, routine_days, routine_exercises, workout_logs, set_logs) with full RLS — needs to be applied to the production Supabase project before testing.
 - Bundled exercise library (~60 exercises) in `src/lib/api/exercises.ts`; same pattern as the foods staples library — referenced by stable text id, never persisted to a Supabase exercises table.
@@ -19,12 +19,13 @@ One sentence per decision (per AI rule 13). Newest first.
 - Home dashboard now also surfaces today's workout card if one is scheduled.
 - METHODOLOGY.md § 13 documents the workout science (rep schemes, progressive overload rules, template shapes).
 
-**Phase 2.6 (local audio trigger) shipped** in the same branch — see decision above for details. Foreground-only by design.
+**Phase 2.6 (local audio trigger) deferred** — code (migration, queries, playback module) is shipped but the UI + auto-play `useEffect` are gated by `HYPE_SONG_ENABLED = false` in `src/app/(app)/workout/player.tsx`. See the 2026-05-24 decision entry for what the next AI needs to investigate (likely `expo-audio` vs `expo-av`, pre-download to `file://`, iOS silent-mode).
+
+**Database migrations applied to production:** 0001 through 0006. The audio-related 0005 (table + storage bucket + policies) is applied — Storage rows just aren't being written until the UI is re-enabled.
 
 **Action needed from founder before testing on phone:**
-1. Apply `supabase/migrations/0004_workouts.sql` in the Supabase SQL Editor.
-2. Apply `supabase/migrations/0005_exercise_audio.sql` in the Supabase SQL Editor — this also creates the `exercise-audio` Storage bucket and its policies.
-3. Pull the branch on laptop, run `npm install` (new deps: expo-av, expo-document-picker), then `npx expo start --lan --clear`.
+1. All migrations 0001 → 0006 are already applied. No new SQL needed for this branch's current state.
+2. Pull the branch on laptop, run `npm install`, then `npx expo start --lan --clear`.
 
 ---
 
@@ -46,6 +47,7 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ## Decisions in chronological order (newest first)
 
+- 2026-05-24 — Phase 2.6 (local audio trigger) **deferred and hidden** behind a feature flag. The supporting code (migration `0005_exercise_audio.sql` already applied to production, `src/features/audio/*`, `src/lib/audio/playback.ts`, `expo-av` + `expo-document-picker` installed) is intentionally left in place — only the UI and the auto-play `useEffect` are gated by a `HYPE_SONG_ENABLED = false` constant at the top of `src/app/(app)/workout/player.tsx`. **Why deferred:** founder reported the song did not play on a real iPhone in Expo Go (file picker + upload completed, signed URL fetched, `Audio.Sound.createAsync` did not produce audible output). **What the next AI needs to investigate:** (a) does `expo-av` in Expo Go SDK 54 honour `playsInSilentModeIOS`? (b) does the signed-URL stream actually return audio bytes for MP3 (`content-type` matters)? (c) does iOS silent-mode switch need to be off during testing? (d) consider migrating to `expo-audio` (the SDK 54+ replacement for `expo-av`); (e) consider pre-downloading the file via `expo-file-system` and playing the `file://` URI rather than a remote signed URL. To re-enable the UI: flip the flag and re-test the assign → upload → rest-end auto-play loop.
 - 2026-05-24 — Phase 2 bug-fix and small-feature pass: (1) Workout player's `setIdx` now advances to `targetSets` after the last set so `allSetsDone` flips and the UI swaps "Complete set" → "Next exercise" (fixes the loop where users could re-log Set 3 repeatedly). (2) Rest-timer ring number now uses raw `RNText` with explicit `lineHeight` (was being clipped by the variant's text-base line-height — same bug we fixed earlier on Home). (3) Hype song moved from a bottom Card to a compact pill row immediately under the exercise header so it's always visible. (4) Manual food entry: new `src/app/(app)/foods/manual.tsx` lets users save a food with name + per-100g macros (source='manual'), reachable from a new "Add manually" button on the search screen. (5) Search ranking unified — staples and OFF results now share a single score (exact name = 100, starts-with = 90/70, includes = 60/40) so "banana" surfaces "Banana" at the top regardless of source. (6) Pure-vegetarian support: `0006_excludes_eggs.sql` adds a boolean column to profiles; onboarding asks "Do you eat eggs?" when Vegetarian is selected; science engine treats vegetarian+excludes_eggs like vegan for the protein g/kg bump. (7) Plan tab — every meal suggestion now has a "Log this meal" button that splits the template across food_logs entries proportional to gram weight (one-tap manual diet logging without a full custom-builder UI). Templates per slot bumped 3 → 5 for more variety.
 - 2026-05-24 — Phase 2.6 (local audio trigger) shipped: `0005_exercise_audio.sql` adds an `exercise_audio` table + a private `exercise-audio` Storage bucket + storage policies that confine each user to their own folder via `(storage.foldername(name))[1] = auth.uid()::text`. New module `src/lib/audio/playback.ts` owns a singleton `Audio.Sound` (expo-av) so only one song plays at a time; `setAudioModeAsync` sets `playsInSilentModeIOS=true`. Workout player gains a "Hype song" card — pick via `expo-document-picker`, upload to Storage under `{userId}/{exerciseId}-…filename`, save row. Auto-play fires when rest transitions from > 0 → 0 (tracked via `prevRestRef`); song is stopped the moment a set is completed (so rest is silent and the song plays into the next set). Foreground-only — master prompt § 9 / Phase 3 will revisit background-audio for streaming.
 - 2026-05-24 — UI/UX redesign extended to every tab + bug fix on the hero ring. Fixed kcal-number clipping (variant `text-base` line-height was squeezing the 48pt font — now using raw RNText with explicit lineHeight everywhere a custom font size is used inside `CircularProgress`); fixed "lone dot at 12 o'clock" when progress is 0 (skip drawing the coloured arc until `dash > 0.5`). Redesigned Log tab (hero mini-ring + dashed "Add to meal" empty meal slots + macro pills per meal + × delete buttons), Workout tab (visual 7-day strip with today/training/rest dots + "Next session" hint on rest days), Plan tab (daily summary card + per-meal cards with target pills + neater suggestion layout), Profile tab (identity with BMI/BF pills + Target card + Metabolism card + Current routine card + Settings card).

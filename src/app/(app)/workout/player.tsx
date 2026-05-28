@@ -31,6 +31,15 @@ import { suggestProgression, type PreviousSet } from '@/lib/science/workout';
 import { tokens } from '@/lib/design/tokens';
 import { t } from '@/i18n/strings';
 
+/**
+ * Phase 2.6 Hype-song feature is HIDDEN pending a real-device playback
+ * investigation (see DECISIONS 2026-05-24 deferral). The supporting code —
+ * migrations/0005, features/audio, lib/audio/playback, exercise_audio table —
+ * is intentionally left in place so a future AI can revive the UI when the
+ * playback path is confirmed working. Flip this flag to true to re-enable.
+ */
+const HYPE_SONG_ENABLED = false;
+
 interface CurrentExerciseState {
   routineExercise: RoutineExercise;
   isCompound: boolean;
@@ -206,7 +215,9 @@ export default function WorkoutPlayer() {
   );
 
   // Auto-play hype song when rest just ended.
+  // Disabled while HYPE_SONG_ENABLED is false (Phase 2.6 deferred).
   useEffect(() => {
+    if (!HYPE_SONG_ENABLED) return;
     const justEnded = prevRestRef.current > 0 && restRemaining === 0;
     prevRestRef.current = restRemaining;
     if (!justEnded || !audio) return;
@@ -390,38 +401,42 @@ export default function WorkoutPlayer() {
         </Pressable>
       </View>
 
-      {/* Compact Hype-song row — always visible right under the header */}
-      <Pressable
-        onPress={audioBusy ? undefined : audio ? onRemoveAudio : onPickAudio}
-        disabled={audioBusy}
-        accessibilityRole="button"
-        className="flex-row items-center gap-3 px-3 py-2 rounded-lg bg-bg-surface border border-border"
-      >
-        <RNText style={{ fontSize: 18 }}>🎵</RNText>
-        <View className="flex-1">
-          <Text variant="caption" className="text-fg-muted">
-            {t('workout.audioTitle')}
-          </Text>
-          <Text variant="body" numberOfLines={1}>
-            {audio
-              ? audio.displayName ?? 'Assigned song'
-              : audioBusy
-                ? t('workout.audioPicking')
-                : t('workout.audioPick')}
-          </Text>
-        </View>
-        {audioBusy ? (
-          <ActivityIndicator />
-        ) : audio ? (
-          <RNText style={{ color: tokens.colors.fg.muted, fontSize: 20 }}>×</RNText>
-        ) : (
-          <RNText style={{ color: tokens.colors.info.DEFAULT, fontSize: 20 }}>+</RNText>
-        )}
-      </Pressable>
-      {audioErr ? (
-        <Text variant="caption" className="text-danger">
-          {audioErr}
-        </Text>
+      {/* Phase 2.6 Hype song UI hidden — see HYPE_SONG_ENABLED at top. */}
+      {HYPE_SONG_ENABLED ? (
+        <>
+          <Pressable
+            onPress={audioBusy ? undefined : audio ? onRemoveAudio : onPickAudio}
+            disabled={audioBusy}
+            accessibilityRole="button"
+            className="flex-row items-center gap-3 px-3 py-2 rounded-lg bg-bg-surface border border-border"
+          >
+            <RNText style={{ fontSize: 18 }}>🎵</RNText>
+            <View className="flex-1">
+              <Text variant="caption" className="text-fg-muted">
+                {t('workout.audioTitle')}
+              </Text>
+              <Text variant="body" numberOfLines={1}>
+                {audio
+                  ? audio.displayName ?? 'Assigned song'
+                  : audioBusy
+                    ? t('workout.audioPicking')
+                    : t('workout.audioPick')}
+              </Text>
+            </View>
+            {audioBusy ? (
+              <ActivityIndicator />
+            ) : audio ? (
+              <RNText style={{ color: tokens.colors.fg.muted, fontSize: 20 }}>×</RNText>
+            ) : (
+              <RNText style={{ color: tokens.colors.info.DEFAULT, fontSize: 20 }}>+</RNText>
+            )}
+          </Pressable>
+          {audioErr ? (
+            <Text variant="caption" className="text-danger">
+              {audioErr}
+            </Text>
+          ) : null}
+        </>
       ) : null}
 
       {/* Set tracker dots */}
