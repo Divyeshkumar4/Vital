@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -145,30 +145,46 @@ export default function Home() {
 
       {/* Hero ring */}
       <View className="items-center gap-4">
-        <CircularProgress progress={progress} size={240} strokeWidth={16}>
-          <Text
-            className="text-fg"
+        <CircularProgress progress={progress} size={220} strokeWidth={14}>
+          <RNText
             style={{
-              fontSize: 48,
+              fontSize: 44,
+              lineHeight: 52,
               fontWeight: '700',
               fontVariant: ['tabular-nums'],
               color: overshoot ? tokens.colors.warn.DEFAULT : tokens.colors.fg.DEFAULT,
+              textAlign: 'center',
             }}
           >
             {overshoot ? `+${kcalConsumed - kcalTarget}` : kcalLeft}
-          </Text>
-          <Text variant="caption" className="text-fg-muted">
-            {overshoot ? 'over' : 'kcal left'}
-          </Text>
-          <Text variant="caption" className="text-fg-subtle">
+          </RNText>
+          <RNText
+            style={{
+              fontSize: 13,
+              lineHeight: 18,
+              color: tokens.colors.fg.muted,
+              marginTop: 2,
+            }}
+          >
+            {overshoot ? 'over target' : 'kcal left'}
+          </RNText>
+          <RNText
+            style={{
+              fontSize: 12,
+              lineHeight: 16,
+              color: tokens.colors.fg.subtle,
+              fontVariant: ['tabular-nums'],
+              marginTop: 2,
+            }}
+          >
             {kcalConsumed} / {kcalTarget}
-          </Text>
+          </RNText>
         </CircularProgress>
 
         <View className="flex-row flex-wrap justify-center gap-2">
-          <Pill label="P" value={`${proteinLeft} g`} tone="accent" />
-          <Pill label="F" value={`${fatLeft} g`} tone="warn" />
-          <Pill label="C" value={`${carbsLeft} g`} tone="info" />
+          <Pill label="Protein" value={`${proteinLeft} g`} tone="accent" />
+          <Pill label="Fat" value={`${fatLeft} g`} tone="warn" />
+          <Pill label="Carbs" value={`${carbsLeft} g`} tone="info" />
         </View>
       </View>
 
@@ -181,7 +197,7 @@ export default function Home() {
         <Card>
           <View className="flex-row items-baseline justify-between">
             <Text variant="caption">{t('workout.todayTitle')}</Text>
-            <Pill label="" value={`${todayDay.exercises.length} ${t('workout.exercises')}`} tone="info" />
+            <Pill label="" value={`${todayDay.exercises.length} exercises`} tone="info" />
           </View>
           <Text variant="h2">{todayDay.name}</Text>
           <Pressable
@@ -193,11 +209,11 @@ export default function Home() {
             }
             className="mt-2 flex-row items-center justify-center min-h-12 rounded-lg bg-accent"
           >
-            <Text
+            <RNText
               style={{ color: tokens.colors.accent.contrast, fontSize: 16, fontWeight: '600' }}
             >
               {t('workout.startWorkout')}
-            </Text>
+            </RNText>
           </Pressable>
         </Card>
       ) : routine ? (
@@ -210,10 +226,7 @@ export default function Home() {
       {actionable.length > 0 ? (
         <Card title={t('dashboard.safetyHeading')}>
           {actionable.map((w, i) => (
-            <View
-              key={i}
-              className={`p-3 rounded-md border ${severityClasses(w.severity)}`}
-            >
+            <View key={i} className={`p-3 rounded-md border ${severityClasses(w.severity)}`}>
               <Text variant="caption">{w.text}</Text>
             </View>
           ))}
