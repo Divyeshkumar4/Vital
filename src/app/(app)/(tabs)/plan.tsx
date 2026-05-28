@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
-import { View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/Card';
 import { Pill } from '@/components/Pill';
+import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
 import { generatePlan, splitDailyTargets } from '@/features/plan/generator';
-import type { MealSlot } from '@/features/log/types';
+import type { ScaledTemplate } from '@/features/plan/generator';
+import { addLog } from '@/features/log/queries';
+import { todayISO, type MealSlot } from '@/features/log/types';
 import { t } from '@/i18n/strings';
 
 const MEAL_LABELS: Record<MealSlot, string> = {
@@ -17,7 +20,9 @@ const MEAL_LABELS: Record<MealSlot, string> = {
 };
 
 export default function PlanTab() {
+  const user = useAuth((s) => s.user);
   const profile = useProfile((s) => s.profile);
+  const [logging, setLogging] = useState<string | null>(null);
 
   const plan = useMemo(() => {
     if (
@@ -34,8 +39,39 @@ export default function PlanTab() {
       profile.targetFatG,
       profile.targetCarbsG,
     );
-    return generatePlan(splits, 3);
+    return generatePlan(splits, 5);
   }, [profile]);
+
+  const onLogTemplate = async (slot: MealSlot, tmpl: ScaledTemplate) => {
+    if (!user) return;
+    setLogging(tmpl.id);
+    try {
+      // Splits the template's calories across its items proportional to qty.
+      const totalG = tmpl.items.reduce((sum, it) => sum + it.qtyG, 0) || 1;
+      for (const it of tmpl.items) {
+        const share = it.qtyG / totalG;
+        await addLog({
+          userId: user.id,
+          date: todayISO(),
+          meal: slot,
+          foodId: null,
+          foodName: it.name,
+          brand: null,
+          quantityG: it.qtyG,
+          kcal: Math.round(tmpl.kcal * share),
+          proteinG: Math.round(tmpl.proteinG * share * 10) / 10,
+          carbsG: Math.round(tmpl.carbsG * share * 10) / 10,
+          fatG: Math.round(tmpl.fatG * share * 10) / 10,
+          fiberG: null,
+        });
+      }
+      Alert.alert('Added', `${tmpl.name} logged to ${MEAL_LABELS[slot].toLowerCase()}.`);
+    } catch (e) {
+      Alert.alert('Could not log', e instanceof Error ? e.message : String(e));
+    } finally {
+      setLogging(null);
+    }
+  };
 
   if (!plan) {
     return (
@@ -62,11 +98,10 @@ export default function PlanTab() {
         <Text variant="caption">{t('plan.title')}</Text>
         <Text variant="h1">Meal ideas</Text>
         <Text variant="caption" className="text-fg-muted">
-          {t('plan.subtitle')}
+          Pick what fits your day — tap "Log this meal" to add it to today’s log.
         </Text>
       </View>
 
-      {/* Daily summary row */}
       <Card>
         <View className="flex-row items-baseline justify-between">
           <Text variant="caption">Daily target</Text>
@@ -94,7 +129,7 @@ export default function PlanTab() {
           </View>
           <View className="border-t border-border pt-3 gap-4">
             {meal.suggestions.map((s) => (
-              <View key={s.id} className="gap-1">
+              <View key={s.id} className="gap-2">
                 <View className="flex-row items-baseline justify-between">
                   <Text variant="body" className="font-semibold flex-1 pr-2">
                     {s.name}
@@ -109,6 +144,15 @@ export default function PlanTab() {
                 <Text variant="caption" className="text-fg-subtle">
                   {s.items.map((it) => `${it.name} ${it.display}`).join(' · ')}
                 </Text>
+                <Pressable
+                  onPress={() => onLogTemplate(meal.split.slot, s)}
+                  disabled={logging !== null}
+                  className="self-start px-3 py-2 rounded-md bg-bg-elevated border border-border"
+                >
+                  <Text variant="caption">
+                    {logging === s.id ? 'Logging…' : 'Log this meal'}
+                  </Text>
+                </Pressable>
               </View>
             ))}
           </View>

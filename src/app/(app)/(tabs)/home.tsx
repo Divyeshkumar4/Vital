@@ -93,6 +93,7 @@ export default function Home() {
       bodyFatPct: profile.bodyFatPct,
       bmrMethod: profile.bmrMethod,
       dietPattern: profile.dietPattern,
+      excludesEggs: profile.excludesEggs,
       deficitPct: profile.goal === 'lose' ? profile.deficitPct ?? 20 : undefined,
       surplusPct: profile.goal === 'gain' ? profile.surplusPct ?? 10 : undefined,
       clinicallySupervised: profile.clinicallySupervised,

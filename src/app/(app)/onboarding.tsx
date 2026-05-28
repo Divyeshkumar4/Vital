@@ -35,6 +35,7 @@ interface FormState {
   persona: Persona;
   endurance: boolean;
   diet: DietPattern;
+  excludesEggs: boolean;
   goal: Goal | null;
 }
 
@@ -52,6 +53,7 @@ const emptyForm: FormState = {
   persona: 'general',
   endurance: false,
   diet: 'omnivore',
+  excludesEggs: false,
   goal: null,
 };
 
@@ -114,6 +116,7 @@ export default function Onboarding() {
       persona: profile.persona,
       endurance: profile.endurance,
       diet: profile.dietPattern,
+      excludesEggs: profile.excludesEggs ?? false,
       goal: profile.goal,
     });
   }, [profile]);
@@ -215,6 +218,7 @@ export default function Onboarding() {
         persona: form.persona,
         endurance: form.endurance,
         dietPattern: form.diet,
+        excludesEggs: form.diet === 'vegetarian' ? form.excludesEggs : false,
         deficitPct: form.goal === 'lose' ? 20 : null,
         surplusPct: form.goal === 'gain' ? 10 : null,
         targetCalories: Math.round(finalResult.value.finalCalories),
@@ -380,6 +384,18 @@ export default function Onboarding() {
           { value: 'vegan', label: t('onboarding.dietVegan') },
         ]}
       />
+
+      {form.diet === 'vegetarian' ? (
+        <SegmentedChoice
+          label={t('onboarding.eggsQ')}
+          value={form.excludesEggs ? 'no' : 'yes'}
+          onChange={(v) => setField('excludesEggs', v === 'no')}
+          options={[
+            { value: 'yes', label: t('onboarding.eggsYes') },
+            { value: 'no', label: t('onboarding.eggsNo') },
+          ]}
+        />
+      ) : null}
 
       <SegmentedChoice
         label={t('onboarding.goal')}

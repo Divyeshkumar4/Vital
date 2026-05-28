@@ -20,6 +20,7 @@ interface ProfileRow {
   surplus_pct: number | null;
   clinically_supervised: boolean;
   asian_bmi: boolean;
+  excludes_eggs: boolean;
   target_calories: number | null;
   target_protein_g: number | null;
   target_fat_g: number | null;
@@ -48,6 +49,7 @@ function rowToProfile(r: ProfileRow): Profile {
     surplusPct: r.surplus_pct,
     clinicallySupervised: r.clinically_supervised,
     asianBmi: r.asian_bmi,
+    excludesEggs: r.excludes_eggs,
     targetCalories: r.target_calories,
     targetProteinG: r.target_protein_g,
     targetFatG: r.target_fat_g,
@@ -76,6 +78,7 @@ function profileToRow(p: Partial<Profile>): Partial<ProfileRow> {
   if (p.surplusPct !== undefined) out.surplus_pct = p.surplusPct;
   if (p.clinicallySupervised !== undefined) out.clinically_supervised = p.clinicallySupervised;
   if (p.asianBmi !== undefined) out.asian_bmi = p.asianBmi;
+  if (p.excludesEggs !== undefined) out.excludes_eggs = p.excludesEggs;
   if (p.targetCalories !== undefined) out.target_calories = p.targetCalories;
   if (p.targetProteinG !== undefined) out.target_protein_g = p.targetProteinG;
   if (p.targetFatG !== undefined) out.target_fat_g = p.targetFatG;

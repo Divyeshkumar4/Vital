@@ -55,6 +55,9 @@ export interface ScienceInput {
   bodyFatPct?: number | null;
   bmrMethod?: BmrMethod;
   dietPattern?: DietPattern;
+  /** When true AND dietPattern==='vegetarian', protein math is treated like vegan
+   * (eggs excluded → lower-leucine plant-leaning intake). Defaults to false. */
+  excludesEggs?: boolean;
   /** 1–25 self-directed, 1–40 if clinicallySupervised; ignored unless goal==='lose'. */
   deficitPct?: number;
   /** 1–20; ignored unless goal==='gain'. */

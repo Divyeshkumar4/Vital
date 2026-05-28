@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text as RNText, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -296,6 +296,9 @@ export default function WorkoutPlayer() {
         setRestTotal(exercise.restSec);
         setRestRemaining(exercise.restSec);
       } else {
+        // All sets done. Push setIdx past the target so allSetsDone flips to
+        // true and the UI swaps Complete set -> Next exercise / Finish.
+        setSetIdx(exercise.targetSets);
         setRestRemaining(0);
         setRestTotal(0);
       }
@@ -387,6 +390,40 @@ export default function WorkoutPlayer() {
         </Pressable>
       </View>
 
+      {/* Compact Hype-song row — always visible right under the header */}
+      <Pressable
+        onPress={audioBusy ? undefined : audio ? onRemoveAudio : onPickAudio}
+        disabled={audioBusy}
+        accessibilityRole="button"
+        className="flex-row items-center gap-3 px-3 py-2 rounded-lg bg-bg-surface border border-border"
+      >
+        <RNText style={{ fontSize: 18 }}>🎵</RNText>
+        <View className="flex-1">
+          <Text variant="caption" className="text-fg-muted">
+            {t('workout.audioTitle')}
+          </Text>
+          <Text variant="body" numberOfLines={1}>
+            {audio
+              ? audio.displayName ?? 'Assigned song'
+              : audioBusy
+                ? t('workout.audioPicking')
+                : t('workout.audioPick')}
+          </Text>
+        </View>
+        {audioBusy ? (
+          <ActivityIndicator />
+        ) : audio ? (
+          <RNText style={{ color: tokens.colors.fg.muted, fontSize: 20 }}>×</RNText>
+        ) : (
+          <RNText style={{ color: tokens.colors.info.DEFAULT, fontSize: 20 }}>+</RNText>
+        )}
+      </Pressable>
+      {audioErr ? (
+        <Text variant="caption" className="text-danger">
+          {audioErr}
+        </Text>
+      ) : null}
+
       {/* Set tracker dots */}
       <View className="flex-row gap-2 justify-center">
         {Array.from({ length: exercise.targetSets }, (_, i) => {
@@ -437,19 +474,28 @@ export default function WorkoutPlayer() {
             strokeWidth={10}
             color={tokens.colors.info.DEFAULT}
           >
-            <Text
+            <RNText
               style={{
                 color: tokens.colors.info.DEFAULT,
-                fontSize: 36,
+                fontSize: 40,
+                lineHeight: 48,
                 fontWeight: '700',
                 fontVariant: ['tabular-nums'],
+                textAlign: 'center',
               }}
             >
               {restRemaining}
-            </Text>
-            <Text variant="caption" className="text-fg-muted">
+            </RNText>
+            <RNText
+              style={{
+                fontSize: 12,
+                lineHeight: 16,
+                color: tokens.colors.fg.muted,
+                marginTop: 2,
+              }}
+            >
               rest · sec
-            </Text>
+            </RNText>
           </CircularProgress>
           <Pressable
             onPress={() => setRestRemaining(0)}
@@ -512,46 +558,6 @@ export default function WorkoutPlayer() {
           onPress={onNextExercise}
         />
       )}
-
-      {/* Hype song */}
-      <Card>
-        <View className="flex-row items-baseline justify-between">
-          <Text variant="caption">{t('workout.audioTitle')}</Text>
-          {audio ? (
-            <Pressable
-              onPress={onRemoveAudio}
-              disabled={audioBusy}
-              className="px-2 py-1 rounded-md bg-bg-elevated border border-border"
-            >
-              <Text variant="caption" className="text-fg-muted">
-                {t('workout.audioRemove')}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-        {audio ? (
-          <Text variant="body" numberOfLines={1}>
-            🎵 {audio.displayName ?? 'Assigned song'}
-          </Text>
-        ) : (
-          <Text variant="caption" className="text-fg-muted">
-            {t('workout.audioEmpty')}
-          </Text>
-        )}
-        {!audio || audioBusy ? (
-          <Button
-            title={audioBusy ? t('workout.audioPicking') : t('workout.audioPick')}
-            variant="secondary"
-            onPress={onPickAudio}
-            loading={audioBusy}
-          />
-        ) : null}
-        {audioErr ? (
-          <Text variant="caption" className="text-danger">
-            {audioErr}
-          </Text>
-        ) : null}
-      </Card>
 
       {/* Last session reference */}
       {currentState.history.length > 0 ? (

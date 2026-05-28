@@ -29,6 +29,8 @@ export interface Profile {
   surplusPct: number | null;
   clinicallySupervised: boolean;
   asianBmi: boolean;
+  /** True only when dietPattern==='vegetarian' and the user excludes eggs (common in India). */
+  excludesEggs: boolean;
   targetCalories: number | null;
   targetProteinG: number | null;
   targetFatG: number | null;
