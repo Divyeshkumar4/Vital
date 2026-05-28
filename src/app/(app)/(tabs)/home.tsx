@@ -11,8 +11,10 @@ import { useAuth } from '@/store/auth';
 import { useProfile } from '@/store/profile';
 import { compute } from '@/lib/science';
 import type { ScienceInput, ScienceResult } from '@/lib/science';
-import { getLogsForDate } from '@/features/log/queries';
-import { sumLogs, todayISO, type FoodLog } from '@/features/log/types';
+import { getLogsForDate, getLogsForDateRange } from '@/features/log/queries';
+import { isoDaysAgo, sumLogs, todayISO, type FoodLog } from '@/features/log/types';
+import { sumSpendByDate } from '@/features/cost/types';
+import { formatMoney } from '@/lib/locale/region';
 import { getActiveRoutine } from '@/features/workout/queries';
 import type { RoutineFull } from '@/features/workout/types';
 import { tokens } from '@/lib/design/tokens';
@@ -38,16 +40,19 @@ export default function Home() {
   const profile = useProfile((s) => s.profile);
 
   const [todayLogs, setTodayLogs] = useState<FoodLog[]>([]);
+  const [weekLogs, setWeekLogs] = useState<FoodLog[]>([]);
   const [routine, setRoutine] = useState<RoutineFull | null>(null);
 
   const loadToday = useCallback(async () => {
     if (!user) return;
     try {
-      const [logs, r] = await Promise.all([
+      const [logs, week, r] = await Promise.all([
         getLogsForDate(user.id, todayISO()),
+        getLogsForDateRange(user.id, isoDaysAgo(6), isoDaysAgo(0)),
         getActiveRoutine(user.id),
       ]);
       setTodayLogs(logs);
+      setWeekLogs(week);
       setRoutine(r);
     } catch {
       // Silent — dashboard still works without today's data.
@@ -193,6 +198,37 @@ export default function Home() {
         title={t('dashboard.startLogging')}
         onPress={() => router.push('/(app)/foods/search')}
       />
+
+      {profile?.currency ? (() => {
+        const spend = sumSpendByDate(weekLogs, profile.currency);
+        const today = spend.find((d) => d.date === todayISO());
+        const todayAmount = today?.amount ?? 0;
+        const totalWeek = spend.reduce((s, d) => s + d.amount, 0);
+        const avgWeek = spend.length > 0 ? totalWeek / 7 : 0;
+        const hasAny = spend.some((d) => d.pricedEntries > 0);
+        return (
+          <Pressable
+            onPress={() => router.push('/(app)/cost/month')}
+            accessibilityRole="button"
+            className="bg-bg-surface border border-border rounded-xl p-5 gap-2"
+          >
+            <View className="flex-row items-baseline justify-between">
+              <Text variant="caption" className="text-fg-muted">
+                {t('cost.todaySpend')}
+              </Text>
+              <Text variant="caption" className="text-fg-subtle">
+                {t('cost.seeMonth')} ›
+              </Text>
+            </View>
+            <Text variant="h1">{formatMoney(todayAmount, profile.currency)}</Text>
+            <Text variant="caption" className="text-fg-muted">
+              {hasAny
+                ? `${t('cost.weekAvg')}: ${formatMoney(avgWeek, profile.currency)} ${t('cost.perDay')}`
+                : t('cost.addPriceCta')}
+            </Text>
+          </Pressable>
+        );
+      })() : null}
 
       {todayDay ? (
         <Card>
