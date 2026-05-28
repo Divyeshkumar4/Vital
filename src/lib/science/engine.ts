@@ -53,7 +53,12 @@ export function compute(input: ScienceInput): ScienceComputeResult {
   if (validationError) return validationError;
 
   const method = input.bmrMethod ?? 'msj';
-  const dietPattern = input.dietPattern ?? 'omnivore';
+  let dietPattern = input.dietPattern ?? 'omnivore';
+  // Pure vegetarian (vegetarian + no eggs) — treat the protein math like vegan
+  // since the user excludes the highest-leucine vegetarian source (eggs).
+  if (dietPattern === 'vegetarian' && input.excludesEggs) {
+    dietPattern = 'vegan';
+  }
   const endurance = input.endurance ?? false;
   const supervised = input.clinicallySupervised ?? false;
 

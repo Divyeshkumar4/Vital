@@ -68,13 +68,30 @@ export default function FoodSearch() {
     return () => clearTimeout(handle);
   }, [query]);
 
-  const items: ResultItem[] = useMemo(
-    () => [
-      ...staples.map((s): ResultItem => ({ kind: 'staple', data: s })),
-      ...offResults.map((o): ResultItem => ({ kind: 'off', data: o })),
-    ],
-    [staples, offResults],
-  );
+  const items: ResultItem[] = useMemo(() => {
+    // Score every candidate so an exact name match (regardless of source) wins,
+    // then name-starts-with, then anything else. Staples break ties over OFF.
+    const q = query.trim().toLowerCase();
+    const all: { item: ResultItem; score: number }[] = [];
+    for (const s of staples) {
+      const name = s.name.toLowerCase();
+      let score = 30;
+      if (name === q) score = 100;
+      else if (name.startsWith(q)) score = 90;
+      else if (name.includes(q)) score = 60;
+      all.push({ item: { kind: 'staple', data: s }, score });
+    }
+    for (const o of offResults) {
+      const name = o.name.toLowerCase();
+      let score = 20;
+      if (name === q) score = 95; // exact match against branded item — still strong
+      else if (name.startsWith(q)) score = 70;
+      else if (name.includes(q)) score = 40;
+      all.push({ item: { kind: 'off', data: o }, score });
+    }
+    all.sort((a, b) => b.score - a.score);
+    return all.map((r) => r.item);
+  }, [staples, offResults, query]);
 
   const onPick = async (item: ResultItem) => {
     setPicking(`${item.kind}:${item.data.sourceId}`);
@@ -117,11 +134,22 @@ export default function FoodSearch() {
           autoCapitalize="none"
           autoCorrect={false}
         />
-        <Button
-          title={t('foods.scanBarcode')}
-          variant="secondary"
-          onPress={() => router.push('/(app)/foods/scan')}
-        />
+        <View className="flex-row gap-2">
+          <View className="flex-1">
+            <Button
+              title={t('foods.scanBarcode')}
+              variant="secondary"
+              onPress={() => router.push('/(app)/foods/scan')}
+            />
+          </View>
+          <View className="flex-1">
+            <Button
+              title="Add manually"
+              variant="secondary"
+              onPress={() => router.push('/(app)/foods/manual')}
+            />
+          </View>
+        </View>
       </View>
 
       {offLoading ? (

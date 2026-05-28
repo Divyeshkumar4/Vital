@@ -27,6 +27,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: tabIcon('home-outline') }} />
       <Tabs.Screen name="log" options={{ title: 'Log', tabBarIcon: tabIcon('list-outline') }} />
+      <Tabs.Screen name="workout" options={{ title: 'Workout', tabBarIcon: tabIcon('barbell-outline') }} />
       <Tabs.Screen name="plan" options={{ title: 'Plan', tabBarIcon: tabIcon('restaurant-outline') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon('person-outline') }} />
     </Tabs>
