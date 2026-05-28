@@ -16,6 +16,9 @@ export interface FoodLog {
   carbsG: number;
   fatG: number;
   fiberG: number | null;
+  /** Snapshot of the total price the user paid for this entry (currency = currencyAtLog). Null if unknown. */
+  priceAtLog: number | null;
+  currencyAtLog: string | null;
   createdAt: string;
 }
 
@@ -32,6 +35,8 @@ export interface FoodLogInsert {
   carbsG: number;
   fatG: number;
   fiberG: number | null;
+  priceAtLog?: number | null;
+  currencyAtLog?: string | null;
 }
 
 export interface DailyTotals {

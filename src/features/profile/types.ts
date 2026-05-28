@@ -31,6 +31,10 @@ export interface Profile {
   asianBmi: boolean;
   /** True only when dietPattern==='vegetarian' and the user excludes eggs (common in India). */
   excludesEggs: boolean;
+  /** ISO 3166-1 alpha-2 country code (e.g. "IN", "US") or "GLOBAL" if unset. Drives community-price lookup. */
+  region: string | null;
+  /** ISO 4217 currency code (e.g. "INR", "USD"). Persisted with each food_log snapshot. */
+  currency: string | null;
   targetCalories: number | null;
   targetProteinG: number | null;
   targetFatG: number | null;
