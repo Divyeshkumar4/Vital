@@ -223,6 +223,12 @@ const en = {
     playerReasonAddWeight: 'you crushed last session — add weight',
     playerReasonAddReps: 'last weight was tough — push one more rep',
     playerReasonHold: 'last set was missed — repeat the same target',
+    audioTitle: 'Hype song',
+    audioEmpty: 'Add a song to auto-play when rest ends',
+    audioPick: 'Pick a song',
+    audioPicking: 'Uploading…',
+    audioRemove: 'Remove',
+    audioPlaybackErr: 'Could not play that song — file may be unavailable.',
   },
   errors: {
     generic: 'Something went wrong. Please try again.',

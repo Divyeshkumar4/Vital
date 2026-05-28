@@ -43,13 +43,13 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 - Bottom tab bar navigation (Home / Log / Plan / Profile)
 - Common-foods staples library (Indian + Western, 62 items)
 
-## Phase 2 — Workout + in-gym player + local audio  🟡 (in flight on `claude/phase-2-workouts`)
+## Phase 2 — Workout + in-gym player + local audio  ✅ (on `claude/phase-2-workouts`)
 - ✅ 2.1 Exercise library — 60-exercise curated bundle in `src/lib/api/exercises.ts` with muscle groups / equipment / difficulty / instructions
 - ✅ 2.2 Routine generator — 3 templates (beginner full-body / intermediate U-L / advanced PPL), goal-aware (strength / hypertrophy / endurance) rep schemes via science layer
 - 🟡 2.3 Equipment customization — basic ("training type" + goal) in setup screen; full equipment-availability filtering with substitutions deferred
 - ✅ 2.4 Weekly split assignment — day-based (weekday 0–6) on `routine_days`; tab + dashboard auto-detect today
 - ✅ 2.5 In-gym Workout Player — guided set-by-set with rest timer countdown; RIR-aware progression suggestion prefilled; auto-log weight / reps / RIR; auto-advance to next set; finish-and-end flow
-- ⬜ 2.6 Local audio trigger — user uploads a song and assigns it to an exercise; auto-plays on rest-timer-end → next-set-start transition. Needs `expo-av` + Supabase Storage. **Deferred to a separate push** — real-device iOS background-audio testing needed.
+- ✅ 2.6 Local audio trigger — `exercise_audio` table + `exercise-audio` private Storage bucket with own-files-only RLS; assign a song to an exercise from the workout player (expo-document-picker → expo-av playback); auto-plays from a signed URL when rest timer hits 0 and stops when the next set is logged. Foreground-only by design — iOS background-audio is master prompt § 9 / Phase 3 territory.
 
 Master prompt direction: **ship Phase 2 to TestFlight / Play internal testing before starting Phase 3.**
 
@@ -73,5 +73,6 @@ In numeric order, all live on `eeltroiupbgfgldburra.supabase.co`:
 | `0002_foods.sql` | Global foods catalog cache + RLS | 1.4 |
 | `0003_food_logs.sql` | Per-user food logs + RLS (full CRUD on own rows) | 1.5 |
 | `0004_workouts.sql` ⚠️ **not yet applied** | routines + routine_days + routine_exercises + workout_logs + set_logs + RLS | 2.1–2.5 |
+| `0005_exercise_audio.sql` ⚠️ **not yet applied** | exercise_audio table + RLS + private `exercise-audio` Storage bucket + own-files-only storage policies | 2.6 |
 
 Phase 2 stores exercises in code (`src/lib/api/exercises.ts`) rather than a Supabase table — referenced from `routine_exercises.exercise_id` by stable text id. User-defined exercises (if ever needed) will go in a separate `user_exercises` table later.

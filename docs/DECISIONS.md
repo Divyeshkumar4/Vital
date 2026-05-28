@@ -6,7 +6,7 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ## ⏳ Handoff state (2026-05-24, updated)
 
-**Phase 2 (workout module) in flight** on branch `claude/phase-2-workouts`. PR not yet open. What's done in this branch:
+**Phase 2 (workout module) complete** on branch `claude/phase-2-workouts` (PR #3). What's in the branch:
 
 - `supabase/migrations/0004_workouts.sql` adds 5 tables (routines, routine_days, routine_exercises, workout_logs, set_logs) with full RLS — needs to be applied to the production Supabase project before testing.
 - Bundled exercise library (~60 exercises) in `src/lib/api/exercises.ts`; same pattern as the foods staples library — referenced by stable text id, never persisted to a Supabase exercises table.
@@ -19,11 +19,12 @@ One sentence per decision (per AI rule 13). Newest first.
 - Home dashboard now also surfaces today's workout card if one is scheduled.
 - METHODOLOGY.md § 13 documents the workout science (rep schemes, progressive overload rules, template shapes).
 
-**Phase 2.6 (local audio trigger) deferred to a separate push** — needs `expo-av` + Supabase Storage setup + real-device iOS background-audio testing.
+**Phase 2.6 (local audio trigger) shipped** in the same branch — see decision above for details. Foreground-only by design.
 
 **Action needed from founder before testing on phone:**
 1. Apply `supabase/migrations/0004_workouts.sql` in the Supabase SQL Editor.
-2. Pull the branch on laptop + reload Expo.
+2. Apply `supabase/migrations/0005_exercise_audio.sql` in the Supabase SQL Editor — this also creates the `exercise-audio` Storage bucket and its policies.
+3. Pull the branch on laptop, run `npm install` (new deps: expo-av, expo-document-picker), then `npx expo start --lan --clear`.
 
 ---
 
@@ -45,6 +46,7 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ## Decisions in chronological order (newest first)
 
+- 2026-05-24 — Phase 2.6 (local audio trigger) shipped: `0005_exercise_audio.sql` adds an `exercise_audio` table + a private `exercise-audio` Storage bucket + storage policies that confine each user to their own folder via `(storage.foldername(name))[1] = auth.uid()::text`. New module `src/lib/audio/playback.ts` owns a singleton `Audio.Sound` (expo-av) so only one song plays at a time; `setAudioModeAsync` sets `playsInSilentModeIOS=true`. Workout player gains a "Hype song" card — pick via `expo-document-picker`, upload to Storage under `{userId}/{exerciseId}-…filename`, save row. Auto-play fires when rest transitions from > 0 → 0 (tracked via `prevRestRef`); song is stopped the moment a set is completed (so rest is silent and the song plays into the next set). Foreground-only — master prompt § 9 / Phase 3 will revisit background-audio for streaming.
 - 2026-05-24 — UI/UX redesign extended to every tab + bug fix on the hero ring. Fixed kcal-number clipping (variant `text-base` line-height was squeezing the 48pt font — now using raw RNText with explicit lineHeight everywhere a custom font size is used inside `CircularProgress`); fixed "lone dot at 12 o'clock" when progress is 0 (skip drawing the coloured arc until `dash > 0.5`). Redesigned Log tab (hero mini-ring + dashed "Add to meal" empty meal slots + macro pills per meal + × delete buttons), Workout tab (visual 7-day strip with today/training/rest dots + "Next session" hint on rest days), Plan tab (daily summary card + per-meal cards with target pills + neater suggestion layout), Profile tab (identity with BMI/BF pills + Target card + Metabolism card + Current routine card + Settings card).
 - 2026-05-24 — UI/UX redesign aligned to MASTER_PROMPT § 1 mission posture (evidence-first, calm, zero manual math, safety over engagement). Added `info` semantic color (cyan) for metric callouts. Three new primitives: `CircularProgress` (SVG ring), `Stepper` (number input with ±buttons + tabular-nums, gym-friendly), `Pill` (compact label:value badge). Home redesigned around a hero **calorie ring** (kcal-left) + 3 macro pills (P/F/C remaining) + inline today's workout + calmer rest-day micro-copy. Workout player redesigned: set-tracker dots (✓ / number), circular rest-timer countdown, Stepper inputs for weight/reps/RIR with ±2.5 kg / ±1 rep tap-steps, last-session sets shown as Pills.
 - 2026-05-24 — Phase 2.1–2.5 in one push: added `0004_workouts.sql` with 5 tables and full RLS (routines, routine_days, routine_exercises, workout_logs, set_logs); curated 60-exercise library in code with stable text ids (no exercises table); workout science layer in `src/lib/science/workout.ts` with rep schemes per goal + RIR-aware double-progression suggestion (11 new tests); routine generator with 3 templates by experience tier (beginner full-body / intermediate U/L / advanced PPL); 5th "Workout" tab; setup screen + in-gym player with rest timer + progression prefill + auto-advance. Phase 2.6 (local audio) deferred to a separate push.

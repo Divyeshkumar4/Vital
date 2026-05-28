@@ -16,6 +16,15 @@ import {
   logSet,
   startWorkout,
 } from '@/features/workout/queries';
+import {
+  assignAudio,
+  getExerciseAudio,
+  removeExerciseAudio,
+  signedUrlForAudio,
+} from '@/features/audio/queries';
+import type { ExerciseAudio } from '@/features/audio/types';
+import { playFromUri, stopPlayback } from '@/lib/audio/playback';
+import * as DocumentPicker from 'expo-document-picker';
 import type { RoutineExercise, RoutineFull, SetLog } from '@/features/workout/types';
 import { exerciseById } from '@/lib/api/exercises';
 import { suggestProgression, type PreviousSet } from '@/lib/science/workout';
@@ -63,8 +72,14 @@ export default function WorkoutPlayer() {
   const [restRemaining, setRestRemaining] = useState(0);
   const [restTotal, setRestTotal] = useState(0);
   const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevRestRef = useRef(0);
 
   const [currentState, setCurrentState] = useState<CurrentExerciseState | null>(null);
+
+  // Per-exercise hype song.
+  const [audio, setAudio] = useState<ExerciseAudio | null>(null);
+  const [audioBusy, setAudioBusy] = useState(false);
+  const [audioErr, setAudioErr] = useState<string | null>(null);
 
   // Load routine + start workout log.
   useEffect(() => {
@@ -115,14 +130,18 @@ export default function WorkoutPlayer() {
 
   const exercise = day?.exercises[exerciseIdx];
 
-  // When exercise changes, fetch its last session + seed inputs.
+  // When exercise changes, fetch its last session + seed inputs + load audio.
   useEffect(() => {
     if (!user || !exercise) return;
     let cancelled = false;
     (async () => {
       try {
-        const history = await getLastSetsForExercise(user.id, exercise.exerciseId);
+        const [history, audioRow] = await Promise.all([
+          getLastSetsForExercise(user.id, exercise.exerciseId),
+          getExerciseAudio(user.id, exercise.exerciseId),
+        ]);
         if (cancelled) return;
+        setAudio(audioRow);
         const meta = exerciseById(exercise.exerciseId);
         const isCompound = meta?.isCompound ?? false;
         const targetReps = exercise.targetRepsMin;
@@ -180,9 +199,69 @@ export default function WorkoutPlayer() {
   useEffect(
     () => () => {
       if (restRef.current) clearInterval(restRef.current);
+      // Stop any playing song when leaving the player.
+      stopPlayback().catch(() => undefined);
     },
     [],
   );
+
+  // Auto-play hype song when rest just ended.
+  useEffect(() => {
+    const justEnded = prevRestRef.current > 0 && restRemaining === 0;
+    prevRestRef.current = restRemaining;
+    if (!justEnded || !audio) return;
+    (async () => {
+      try {
+        const url = await signedUrlForAudio(audio);
+        if (url) await playFromUri(url);
+      } catch {
+        setAudioErr(t('workout.audioPlaybackErr'));
+      }
+    })();
+  }, [restRemaining, audio]);
+
+  const onPickAudio = async () => {
+    if (!user || !exercise) return;
+    setAudioErr(null);
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: 'audio/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (res.canceled || res.assets.length === 0) return;
+      const file = res.assets[0];
+      if (!file) return;
+      setAudioBusy(true);
+      const saved = await assignAudio({
+        userId: user.id,
+        exerciseId: exercise.exerciseId,
+        fileUri: file.uri,
+        fileName: file.name,
+        mimeType: file.mimeType ?? undefined,
+      });
+      setAudio(saved);
+    } catch (e) {
+      setAudioErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAudioBusy(false);
+    }
+  };
+
+  const onRemoveAudio = async () => {
+    if (!audio) return;
+    setAudioBusy(true);
+    setAudioErr(null);
+    try {
+      await removeExerciseAudio(audio);
+      setAudio(null);
+      await stopPlayback();
+    } catch (e) {
+      setAudioErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAudioBusy(false);
+    }
+  };
 
   const onCompleteSet = async () => {
     if (!user || !workoutLogId || !exercise || !currentState) return;
@@ -205,6 +284,8 @@ export default function WorkoutPlayer() {
         reps,
         rir,
       });
+      // Hype song (if any) was playing during the set — fade out as rest begins.
+      await stopPlayback();
       setCompletedSets((prev) => [
         ...prev,
         { setIndex: setIdx + 1, weightKg: Number.isFinite(weight) ? weight : null, reps },
@@ -431,6 +512,46 @@ export default function WorkoutPlayer() {
           onPress={onNextExercise}
         />
       )}
+
+      {/* Hype song */}
+      <Card>
+        <View className="flex-row items-baseline justify-between">
+          <Text variant="caption">{t('workout.audioTitle')}</Text>
+          {audio ? (
+            <Pressable
+              onPress={onRemoveAudio}
+              disabled={audioBusy}
+              className="px-2 py-1 rounded-md bg-bg-elevated border border-border"
+            >
+              <Text variant="caption" className="text-fg-muted">
+                {t('workout.audioRemove')}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {audio ? (
+          <Text variant="body" numberOfLines={1}>
+            🎵 {audio.displayName ?? 'Assigned song'}
+          </Text>
+        ) : (
+          <Text variant="caption" className="text-fg-muted">
+            {t('workout.audioEmpty')}
+          </Text>
+        )}
+        {!audio || audioBusy ? (
+          <Button
+            title={audioBusy ? t('workout.audioPicking') : t('workout.audioPick')}
+            variant="secondary"
+            onPress={onPickAudio}
+            loading={audioBusy}
+          />
+        ) : null}
+        {audioErr ? (
+          <Text variant="caption" className="text-danger">
+            {audioErr}
+          </Text>
+        ) : null}
+      </Card>
 
       {/* Last session reference */}
       {currentState.history.length > 0 ? (
