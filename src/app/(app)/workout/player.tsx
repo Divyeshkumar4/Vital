@@ -36,12 +36,19 @@ import { tokens } from '@/lib/design/tokens';
 import { t } from '@/i18n/strings';
 
 /**
- * Phase 2.6 Hype-song feature re-enabled 2026-05-28 after migrating playback
- * to expo-audio + pre-downloading the file with expo-file-system (see
- * src/lib/audio/playback.ts). The earlier deferral notes are kept in
- * docs/DECISIONS.md for context. Founder must verify on a real iPhone.
+ * Phase 2.6 Hype-song feature is HIDDEN again (2026-05-28, second deferral)
+ * after the founder tested the expo-audio + pre-download fix on a real iPhone
+ * and still got no audible output in Expo Go. See DECISIONS 2026-05-28 second
+ * entry for what was tried and what the next AI should try next (custom dev
+ * client, react-native-track-player, or test on Android first to isolate).
+ *
+ * Supporting code is intentionally left in place — migrations/0005,
+ * src/features/audio/*, src/lib/audio/playback.ts (now on expo-audio), the
+ * exercise_audio table, and the FREE_LIMITS.hypeSongs gate are all wired so
+ * a future AI can revive the UI without re-plumbing anything. Flip this flag
+ * to true to re-enable.
  */
-const HYPE_SONG_ENABLED = true;
+const HYPE_SONG_ENABLED = false;
 
 interface CurrentExerciseState {
   routineExercise: RoutineExercise;

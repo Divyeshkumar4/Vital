@@ -213,8 +213,9 @@ Design rule: **log entries snapshot the values** (don't just reference the catal
     - Auto-pull prices where a free/regional source is available; **fallback and primary = community model**: users enter a food's price once (stored per region/currency, remembered), and other users see crowd-sourced prices to pick from. Show a "verified by N users" count.
 - 3.2 **Freemium gating (scaffold):** define free vs premium and wire the gates throughout the app (suggested: free = core tracking; premium = cost analytics, advanced programming, more meal options, unlimited custom audio). V1 uses an in-app stub for the purchase flow; live billing moves to Phase 4 once RevenueCat credentials exist.
 
-### PHASE 4 — Credentialed launch (founder-action gated)
-Each task here is blocked until the founder provides the relevant credentials / accounts. The app is architected to slot them in without refactors.
+### PHASE 4 — Credentialed launch + deferred audio (founder-action / native-build gated)
+Each task here is blocked on something the founder has to supply or set up. The app is architected to slot them in without refactors.
+- 4.0 **Hype-song audio playback (second deferral, native-build gated).** Two attempts have failed in Expo Go on a real iPhone: original `expo-av` + signed-URL streaming (2026-05-24), then `expo-audio` + `expo-file-system` pre-download to a `file://` URI (2026-05-28). All supporting infra is wired (table, bucket, RLS, FREE_LIMITS gate, player UI behind `HYPE_SONG_ENABLED`). The next AI should NOT just retry — read the DECISIONS 2026-05-28 second entry first, then pick one of: (a) build a **custom dev client** (`npx expo prebuild` + `eas build --profile development`) to rule out Expo Go's known audio quirks before changing any code, (b) swap to **react-native-track-player** which has more battle-tested iOS audio routing, (c) test the existing code on **Android first** to isolate whether this is iOS-specific.
 - 4.1 **Google + Apple OAuth** completion in Supabase (provider credentials from founder, then wire `expo-auth-session`).
 - 4.2 **Spotify SDK** streaming-music integration (paid Spotify account + Spotify developer app required; iOS background-audio caveat noted in master prompt § 9).
 - 4.3 **Apple MusicKit** streaming-music integration (Apple Developer Program + MusicKit identifier).

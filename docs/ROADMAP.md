@@ -6,20 +6,21 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 
 ---
 
-## 👉 Pickup point for the next AI agent (2026-05-28, updated)
+## 👉 Pickup point for the next AI agent (2026-05-28, updated — audio re-deferred)
 
-**Where we are:** Phase 0, 1, 2, and **Phase 3 (renumbered)** are complete on branch `claude/affectionate-lamport-d5JCe`. Phase 2.6 audio has been re-enabled (migrated from `expo-av` to `expo-audio` + pre-download to `file://` URI). Phase 3.1 cost-of-eating is live with community pricing. Phase 3.2 freemium gating scaffold is live with a stub purchase flow — RevenueCat live billing moved to the new Phase 4.
+**Where we are:** Phase 0, 1, 2 (minus 2.6), and **Phase 3** are complete on branch `claude/affectionate-lamport-d5JCe` (draft PR #4). Phase 3.1 cost-of-eating is live with community pricing. Phase 3.2 freemium gating scaffold is live with a stub purchase flow — RevenueCat live billing moved to the new Phase 4.
 
-**Founder action items before testing:**
-1. Apply migrations `0007_food_prices.sql` and `0008_subscriptions.sql` to the production Supabase project (`eeltroiupbgfgldburra`).
-2. Pull this branch, `npm install`, then `npx expo start --lan --clear`.
-3. Re-onboard to pick region + currency (legacy profiles default to no cost card until they do).
-4. **Verify on a real iPhone (audio is hardware-dependent):** assign a hype song → complete a set → confirm song plays into the next set after rest. If still silent, see DECISIONS 2026-05-24 for further leads.
+**Phase 2.6 (hype-song audio) was re-enabled this session, tested by the founder on a real iPhone, FAILED AGAIN (silent), and re-deferred.** `HYPE_SONG_ENABLED` is back to `false` in `src/app/(app)/workout/player.tsx`. The expo-audio + expo-file-system code in `src/lib/audio/playback.ts` is intentionally kept — it's the second attempt's groundwork for the next AI. Task is now **Phase 4.0**. Read DECISIONS 2026-05-28 second entry before touching audio.
+
+**Migrations that need to be applied to production Supabase (`eeltroiupbgfgldburra`):**
+- `supabase/migrations/0007_food_prices.sql`
+- `supabase/migrations/0008_subscriptions.sql`
 
 **What to do next, in order:**
-1. Test the branch on device, merge to `main` if green.
-2. Phase 4 (Credentialed launch — OAuth, Spotify SDK, Apple MusicKit, RevenueCat live billing) requires founder-supplied credentials/accounts. Document what's needed per task before starting.
-3. Phase 5 (Scale & moat) — future.
+1. **Get founder confirmation that the rest of PR #4 (cost + freemium) is working on their iPhone**, then mark PR #4 ready for review and squash-merge to `main`. The hype-song UI is hidden via the flag, so the rest of the app is fully usable as-is.
+2. **Phase 4.0 (audio).** Cut a new branch. Do NOT just retry the same approach — that's now failed twice. Start by building a **custom dev client** with `npx expo prebuild` + `eas build --profile development --platform ios` and testing the existing playback code there before changing any code. If still silent in a custom dev client, swap to `react-native-track-player`. Cross-test on Android in parallel to isolate whether this is iOS-specific.
+3. **Phase 4.1–4.4** (OAuth, Spotify, MusicKit, RevenueCat live billing) — each blocked on founder-supplied credentials. Document what's needed per task before starting.
+4. Phase 5 (Scale & moat) — future.
 
 **Before you start any new work, in this order:**
 1. Read `docs/MASTER_PROMPT.md` end-to-end.
@@ -52,19 +53,20 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 - Bottom tab bar navigation (Home / Log / Plan / Profile)
 - Common-foods staples library (Indian + Western, 62 items)
 
-## Phase 2 — Workout + in-gym player + local audio  ✅ (2.6 re-enabled 2026-05-28; founder verification on iPhone required)
+## Phase 2 — Workout + in-gym player + local audio  🟡 (2.6 re-deferred — moved to Phase 4.0)
 - ✅ 2.1 Exercise library — 60-exercise curated bundle in `src/lib/api/exercises.ts` with muscle groups / equipment / difficulty / instructions
 - ✅ 2.2 Routine generator — 3 templates (beginner full-body / intermediate U-L / advanced PPL), goal-aware (strength / hypertrophy / endurance) rep schemes via science layer
 - 🟡 2.3 Equipment customization — basic ("training type" + goal) in setup screen; full equipment-availability filtering with substitutions deferred
 - ✅ 2.4 Weekly split assignment — day-based (weekday 0–6) on `routine_days`; tab + dashboard auto-detect today
 - ✅ 2.5 In-gym Workout Player — guided set-by-set with rest timer countdown; RIR-aware progression suggestion prefilled; auto-log weight / reps / RIR; auto-advance to next set; finish-and-end flow
-- ✅ 2.6 Local audio trigger — re-enabled 2026-05-28. Migrated playback from `expo-av` → `expo-audio` (the SDK 54+ replacement) and pre-download the song to a `file://` URI via `expo-file-system` before playing it. `HYPE_SONG_ENABLED = true`. **Hardware-dependent — founder must confirm sound output on a real iPhone before declaring this fully shipped.**
+- 🟡 2.6 Local audio trigger — **deferred again 2026-05-28** after second attempt (expo-av → expo-audio + pre-download to file://) also failed to produce audio on real iPhone in Expo Go. Moved to **Phase 4.0**. All supporting infra (table, bucket, RLS, FREE_LIMITS gate, player UI behind `HYPE_SONG_ENABLED`) remains in place. The next AI must NOT retry without first reading DECISIONS 2026-05-28 second entry — likely needs a custom dev client (out of Expo Go) or a swap to react-native-track-player.
 
 ## Phase 3 — Cost tracking + freemium gating  ✅
 - ✅ 3.1 Cost of eating — `food_prices` table (community model: read-all-authenticated, insert/update-own); region + currency on `profiles`; price/currency snapshot on `food_logs`; optional price input on the log screen with median community suggestion; Home card showing today's spend + 7-day average; 30-day Cost month screen
 - ✅ 3.2 Freemium gating scaffold — `subscriptions` table with read-own / insert+update-own restricted to source='stub' RLS; `useBilling` Zustand store; reusable `Paywall` modal; gates wired on cost month view, workout setup advanced tier, plan-tab extra meal options, hype-song count cap. **Live billing deferred to Phase 4 (RevenueCat needs founder credentials).**
 
-## Phase 4 — Credentialed launch  ⬜ (founder-action gated)
+## Phase 4 — Credentialed launch + deferred audio  ⬜ (founder-action / native-build gated)
+- ⬜ 4.0 Hype-song audio playback (second deferral). Two playback paths have failed in Expo Go on real iPhone: original `expo-av` + Supabase signed URL, then `expo-audio` + `expo-file-system` pre-download to `file://`. Next AI: do NOT just retry — read DECISIONS 2026-05-28 second entry first. Likely needs (a) custom dev client (`npx expo prebuild` + `eas build --profile development`) to escape Expo Go's audio quirks, (b) swap to `react-native-track-player` which has more proven iOS audio routing, or (c) test on Android first to isolate iOS-specific failure.
 - ⬜ 4.1 Google / Apple OAuth completion — needs provider credentials in Supabase, then wire `expo-auth-session`
 - ⬜ 4.2 Spotify SDK streaming music — needs Spotify developer app + paid user account; iOS background-audio caveat in master prompt § 9
 - ⬜ 4.3 Apple MusicKit streaming music — needs Apple Developer Program + MusicKit identifier

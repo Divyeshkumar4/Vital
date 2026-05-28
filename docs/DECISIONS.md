@@ -4,18 +4,20 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ---
 
-## ⏳ Handoff state (2026-05-28, updated)
+## ⏳ Handoff state (2026-05-28, updated — second audio deferral)
 
-**Phase 3 + Phase 2.6 audio re-enable in one push** on branch `claude/affectionate-lamport-d5JCe`. Status:
+**Phase 3 shipped; Phase 2.6 audio re-deferred** on branch `claude/affectionate-lamport-d5JCe` (draft PR #4). Status:
 
-- Phase 2.6 audio: migrated `expo-av` → `expo-audio`, pre-download via `expo-file-system` to a local `file://` URI. Flag flipped. Code-only fix — founder must test on a real iPhone in Expo Go (`npx expo start --lan --clear` after `npm install` to pick up the new packages).
-- Phase 3.1 cost: `food_prices` table + community model, region/currency in onboarding, optional price entry on the log screen with median suggestion, Home spend card, 30-day cost month screen.
-- Phase 3.2 freemium gating scaffold: `subscriptions` table, `useBilling` store, reusable `Paywall` modal, gates on cost month / advanced workout templates / extra meal options / hype-song count. Stub purchase flow flips the row directly — Phase 4 replaces with RevenueCat.
-- Roadmap renumbered: streaming music + RevenueCat live billing + OAuth completion all moved to a new Phase 4 "Credentialed launch" (founder-action gated). Old Phase 4 "Scale & moat" → Phase 5.
+- **Phase 2.6 audio: SECOND ATTEMPT FAILED.** Founder tested the expo-audio + expo-file-system pre-download fix on a real iPhone in Expo Go — no audible output. `HYPE_SONG_ENABLED` is back to `false`. New playback code in `src/lib/audio/playback.ts` is kept as groundwork for the next attempt. Task moved to Phase 4.0. **Next AI: read this file's 2026-05-28 second entry below before touching audio.**
+- Phase 3.1 cost: `food_prices` table + community model, region/currency in onboarding, optional price entry on the log screen with median suggestion, Home spend card, 30-day cost month screen — all working.
+- Phase 3.2 freemium gating scaffold: `subscriptions` table, `useBilling` store, reusable `Paywall` modal, gates on cost month / advanced workout templates / extra meal options / hype-song count. Stub purchase flow flips the row directly — Phase 4.4 replaces with RevenueCat.
+- Roadmap renumbered: streaming music + RevenueCat live billing + OAuth completion moved to a new Phase 4 "Credentialed launch + deferred audio" (founder-action / native-build gated). Old Phase 4 "Scale & moat" → Phase 5.
 
 **Migrations needing application to production Supabase:** `0007_food_prices.sql`, `0008_subscriptions.sql`.
 
 **Tests:** 119/119 pass. `npx tsc --noEmit` clean.
+
+**Founder is moving to a different AI to continue work.** Whichever AI picks this up: PR #4 is ready to merge once the founder confirms cost + freemium work on iPhone. Audio is a separate effort — start with a custom dev client, do not stay in Expo Go.
 
 ---
 
@@ -61,6 +63,17 @@ One sentence per decision (per AI rule 13). Newest first.
 ---
 
 ## Decisions in chronological order (newest first)
+
+- 2026-05-28 (second entry, late) — **Phase 2.6 hype-song audio re-deferred after second failed attempt on real iPhone.**
+    - **What was tried this session:** migrated `src/lib/audio/playback.ts` from `expo-av` → `expo-audio` (the SDK 54+ replacement). Pre-downloaded the song from the Supabase Storage signed URL to a `file://` URI in the device cache via `expo-file-system/legacy` (`FileSystem.downloadAsync`) before handing it to `createAudioPlayer({ uri })`. Set `setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false, interruptionMode: 'duckOthers' })`. All this so we'd avoid the 302 redirect + ambiguous content-type from a streamed signed URL — which was the leading hypothesis from the 2026-05-24 first deferral.
+    - **What happened:** founder ran on a real iPhone in Expo Go (`npx expo start --lan --clear` after `npm install`). Assigned a song, completed a set, rest timer expired — **no audible output**. Same symptom as the first deferral.
+    - **What this means:** the bug is almost certainly NOT in the URL / file path / content-type. Two completely different playback paths now both produce silence in Expo Go. The remaining likely cause is **Expo Go itself** — it ships a single shared native binary with a specific audio session config baked in, and there are documented cases where third-party audio packages don't get the iOS audio session they need inside Expo Go. The fact that both `expo-av` AND `expo-audio` (different native modules, different APIs) both fail the same way in Expo Go points at the harness, not the library.
+    - **What the next AI must NOT do:** try a third in-Expo-Go fix. Three different libraries failing the same way is the harness, not the library. Stop iterating in Expo Go.
+    - **What the next AI should try, in priority order:**
+        1. **Build a custom dev client and re-test the existing code unchanged.** `npx expo prebuild` then `eas build --profile development --platform ios` (requires the founder's Apple Developer account — gated by Phase 4 credential work, but this is the cleanest test). If the existing expo-audio + pre-download code works in a custom dev client, the bug was always Expo Go and Phase 2.6 ships the moment the founder is off Expo Go.
+        2. **Swap to `react-native-track-player`** as the playback layer. It has more battle-tested iOS audio routing, an explicit Capabilities API, and is the de-facto standard for music-style playback in RN. Requires custom dev client too — it's a native module.
+        3. **Cross-test on Android.** If the current expo-audio code works on Android in Expo Go, that confirms (1) — the bug is iOS-Expo-Go-specific and not a code issue.
+    - **What's kept in the codebase as groundwork:** `src/lib/audio/playback.ts` (new expo-audio + pre-download impl), `expo-audio` + `expo-file-system` in dependencies, `src/features/audio/*` queries, `migrations/0005_exercise_audio.sql`, the `exercise-audio` Supabase Storage bucket with own-files-only RLS, the `FREE_LIMITS.hypeSongs = 3` premium gate, the entire workout-player audio UI hidden behind `HYPE_SONG_ENABLED = false`. Nothing was reverted. Flipping the flag plus following one of the three paths above is the entire next-step.
 
 - 2026-05-28 — Phase 3 shipped end-to-end + Phase 2.6 audio re-enabled; roadmap restructured.
     - **Phase 2.6 re-enable:** migrated `src/lib/audio/playback.ts` from `expo-av` → `expo-audio` (the SDK 54+ replacement), and pre-download the song via `expo-file-system` (legacy API) to a `file://` URI in the cache directory before playback. Earlier deferral (DECISIONS 2026-05-24) traced the failure to streaming a Supabase Storage signed URL (the 302 redirect + ambiguous `content-type` was the suspected cause). Playing from a local file sidesteps both. `HYPE_SONG_ENABLED` flipped back to `true`. Code-only fix — founder must verify on a real iPhone.
