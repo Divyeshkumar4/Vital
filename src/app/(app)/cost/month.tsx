@@ -30,6 +30,7 @@ export default function CostMonth() {
   const user = useAuth((s) => s.user);
   const profile = useProfile((s) => s.profile);
   const isPremium = useBilling((s) => s.isPremium);
+  const billingLoaded = useBilling((s) => s.loaded);
   const currency = profile?.currency ?? 'USD';
 
   const [logs, setLogs] = useState<FoodLog[]>([]);
@@ -38,9 +39,10 @@ export default function CostMonth() {
   const [showPaywall, setShowPaywall] = useState(false);
 
   // Open the paywall automatically the first time a non-premium user lands here.
+  // Wait for billing to load so premium users don't see a flicker.
   useEffect(() => {
-    if (!isPremium) setShowPaywall(true);
-  }, [isPremium]);
+    if (billingLoaded && !isPremium) setShowPaywall(true);
+  }, [billingLoaded, isPremium]);
 
   const load = useCallback(async () => {
     if (!user) return;
