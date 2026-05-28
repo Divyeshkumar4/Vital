@@ -206,15 +206,21 @@ Design rule: **log entries snapshot the values** (don't just reference the catal
 - 2.3 Equipment customization: user marks available gym equipment → routine adapts.
 - 2.4 Weekly split assignment (Monday/Tuesday/… day-based routines).
 - 2.5 **In-gym Workout Player:** open today's routine → guided, set-by-set; auto rest timer between sets; auto-log weights/reps; suggest next-session progression. Zero manual calculation.
-- 2.6 **Local audio trigger:** user uploads a song (e.g., phonk) and assigns it to an exercise; it auto-plays when the rest timer ends and the next set begins. Files in Supabase Storage; played via expo-av.
+- 2.6 **Local audio trigger:** user uploads a song (e.g., phonk) and assigns it to an exercise; it auto-plays when the rest timer ends and the next set begins. Files in Supabase Storage; played via `expo-audio` (pre-downloaded to a `file://` URI via `expo-file-system` for iOS reliability).
 
-### PHASE 3 — Cost tracking + streaming music + freemium
+### PHASE 3 — Cost tracking + freemium gating (in-app, code-only)
 - 3.1 **Cost of eating:** show monthly and daily food spend.
     - Auto-pull prices where a free/regional source is available; **fallback and primary = community model**: users enter a food's price once (stored per region/currency, remembered), and other users see crowd-sourced prices to pick from. Show a "verified by N users" count.
-- 3.2 **Streaming music (with caveats — implement carefully):** integrate Spotify SDK and Apple MusicKit so users can assign streamed tracks to exercises. **Caveat to surface to the founder:** requires the user to have a paid streaming account, is subject to each platform's API limits, and **reliable auto-play is restricted on iOS** by Apple's background-audio rules — so local audio (2.6) remains the dependable default and streaming is a "best effort" enhancement.
-- 3.3 **Freemium:** integrate RevenueCat; define free vs premium (suggested: free = core tracking; premium = auto diet plans, advanced programming, cost analytics, unlimited custom audio).
+- 3.2 **Freemium gating (scaffold):** define free vs premium and wire the gates throughout the app (suggested: free = core tracking; premium = cost analytics, advanced programming, more meal options, unlimited custom audio). V1 uses an in-app stub for the purchase flow; live billing moves to Phase 4 once RevenueCat credentials exist.
 
-### PHASE 4+ — Scale & moat (future)
+### PHASE 4 — Credentialed launch (founder-action gated)
+Each task here is blocked until the founder provides the relevant credentials / accounts. The app is architected to slot them in without refactors.
+- 4.1 **Google + Apple OAuth** completion in Supabase (provider credentials from founder, then wire `expo-auth-session`).
+- 4.2 **Spotify SDK** streaming-music integration (paid Spotify account + Spotify developer app required; iOS background-audio caveat noted in master prompt § 9).
+- 4.3 **Apple MusicKit** streaming-music integration (Apple Developer Program + MusicKit identifier).
+- 4.4 **RevenueCat live billing**: replace the Phase 3.2 stub with the RevenueCat SDK, hook the webhook into a SECURITY DEFINER function so the `subscriptions` table is server-managed, and revoke the v1 stub RLS policies.
+
+### PHASE 5 — Scale & moat (future)
 Community/social, AI coach (LLM-assisted plans), wearable/IoT and connected-gadget integrations, advanced analytics. Architect now (clean data model, Edge Functions) so these slot in later.
 
 ---
