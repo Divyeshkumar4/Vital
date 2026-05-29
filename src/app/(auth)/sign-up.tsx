@@ -56,7 +56,7 @@ export default function SignUp() {
           secureTextEntry
           autoCapitalize="none"
           autoComplete="password-new"
-          placeholder="At least 8 characters"
+          placeholder={t('auth.passwordMinPlaceholder')}
           error={error ?? undefined}
         />
         {message ? (

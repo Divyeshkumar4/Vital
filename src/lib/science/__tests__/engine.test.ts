@@ -87,6 +87,37 @@ describe('compute — safety floor activates for tiny user with deep deficit', (
   }
 });
 
+describe('compute — loss-rate guardrail eases an over-aggressive deficit', () => {
+  // 70 kg male, 180 cm, 30y, very active, supervised 40% deficit.
+  // BMR (MSJ) = 10×70 + 6.25×180 − 5×30 + 5 = 1680. TDEE = 1680 × 1.725 = 2898.
+  // Candidate = 2898 × 0.6 = 1738.8 → deficit 1159.2/day → 1.05 kg/wk = 1.5%/wk > 1%.
+  // Eased: max daily deficit = (0.01×70×7700)/7 = 770 → final = 2898 − 770 = 2128
+  // (still above the 1680 BMR floor, so the floor clamp does not also fire).
+  const r = compute(
+    baseInput({
+      weightKg: 70,
+      activity: 'very',
+      goal: 'lose',
+      deficitPct: 40,
+      clinicallySupervised: true,
+    }),
+  );
+
+  it('returns ok', () => {
+    expect(r.ok).toBe(true);
+  });
+
+  if (r.ok) {
+    it('eases calories to the 1%/week cap (≈2128), above the BMR floor', () => {
+      expect(r.value.finalCalories).toBeCloseTo(2128, 0);
+      expect(r.value.flooredTo).toBeNull();
+    });
+    it('surfaces a loss-rate warning', () => {
+      expect(r.value.warnings.some((w) => /body weight per week/.test(w.text))).toBe(true);
+    });
+  }
+});
+
 describe('compute — input validation', () => {
   it('rejects weight outside 35–300 kg', () => {
     const r = compute(baseInput({ weightKg: 25 }));

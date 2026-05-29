@@ -74,9 +74,9 @@ export default function PlanTab() {
           fiberG: null,
         });
       }
-      Alert.alert('Added', `${tmpl.name} logged to ${MEAL_LABELS[slot].toLowerCase()}.`);
+      Alert.alert(t('plan.addedTitle'), `${tmpl.name} → ${MEAL_LABELS[slot].toLowerCase()}`);
     } catch (e) {
-      Alert.alert('Could not log', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('plan.couldNotLog'), e instanceof Error ? e.message : String(e));
     } finally {
       setLogging(null);
     }
@@ -87,10 +87,10 @@ export default function PlanTab() {
       <Screen scroll className="gap-5">
         <View className="mt-4 gap-1">
           <Text variant="caption">{t('plan.title')}</Text>
-          <Text variant="h1">Meal ideas</Text>
+          <Text variant="h1">{t('plan.heading')}</Text>
         </View>
         <Card>
-          <Text variant="body">Finish onboarding so we can size meal ideas to your daily target.</Text>
+          <Text variant="body">{t('plan.finishOnboarding')}</Text>
         </Card>
       </Screen>
     );
@@ -105,15 +105,15 @@ export default function PlanTab() {
     <Screen scroll className="gap-6">
       <View className="mt-4 gap-1">
         <Text variant="caption">{t('plan.title')}</Text>
-        <Text variant="h1">Meal ideas</Text>
+        <Text variant="h1">{t('plan.heading')}</Text>
         <Text variant="caption" className="text-fg-muted">
-          Pick what fits your day — tap "Log this meal" to add it to today’s log.
+          {t('plan.pickHint')}
         </Text>
       </View>
 
       <Card>
         <View className="flex-row items-baseline justify-between">
-          <Text variant="caption">Daily target</Text>
+          <Text variant="caption">{t('plan.dailyTarget')}</Text>
           <Text variant="h2">{totalKcal} kcal</Text>
         </View>
         <View className="flex-row gap-2 flex-wrap">
@@ -159,7 +159,7 @@ export default function PlanTab() {
                   className="self-start px-3 py-2 rounded-md bg-bg-elevated border border-border"
                 >
                   <Text variant="caption">
-                    {logging === s.id ? 'Logging…' : 'Log this meal'}
+                    {logging === s.id ? t('plan.loggingMeal') : t('plan.logThisMeal')}
                   </Text>
                 </Pressable>
               </View>
@@ -169,9 +169,9 @@ export default function PlanTab() {
                 onPress={() => setShowPaywall(true)}
                 className="self-start flex-row items-center gap-2"
               >
-                <Pill label="" value="Premium" tone="accent" />
+                <Pill label="" value={t('paywall.title')} tone="accent" />
                 <Text variant="caption" className="text-fg-muted">
-                  See more meal options
+                  {t('plan.seeMoreOptions')}
                 </Text>
               </Pressable>
             ) : null}
@@ -181,8 +181,14 @@ export default function PlanTab() {
       <Paywall
         visible={showPaywall}
         onClose={() => setShowPaywall(false)}
-        reason="Premium unlocks 5 meal options per slot (free is 2)."
+        reason={t('plan.paywallReason')}
       />
+
+      <View className="mb-6">
+        <Text variant="caption" className="text-fg-subtle text-center">
+          {t('dashboard.disclaimer')}
+        </Text>
+      </View>
     </Screen>
   );
 }

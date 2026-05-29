@@ -4,6 +4,34 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ---
 
+## ⏳ Handoff state (2026-05-29 — pre-Phase-4 essentials pass, VERIFIED ON DEVICE)
+
+**Active branch:** `claude/confident-brahmagupta-0ewOC` → **draft PR #5** (open). All work below is committed and pushed; working tree is clean. **Founder confirmed it works on a real iPhone (2026-05-29).**
+
+**What this branch did** (founder chose to harden the existing app before starting the credential-gated Phase 4). Five feature/fix commits + docs commits:
+
+1. **Medical disclaimer (compliance, §11):** added the mandatory disclaimer to the Home dashboard, Plan tab, and onboarding form — it was previously only on the Profile tab.
+2. **i18n (AI Rule 9):** moved ~20 hardcoded English strings into `src/i18n/strings.ts` (`tabs`/`home` groups added; `auth`/`log`/`plan`/`foods`/`workout` extended).
+3. **Forgot-password flow:** new `(auth)/forgot-password` + `(auth)/reset-password` screens using Supabase **email-OTP recovery** (no deep links). Auth store gained a `recovery` flag so the `(auth)` layout doesn't redirect mid-reset. Reset-code copy is **length-agnostic** (supports 6–10 digit OTP — this project happens to use 8-digit codes).
+4. **1%/week loss-rate guardrail (safety, §3.4 / METHODOLOGY §4.5):** wired the previously-unused `MAX_LOSS_RATE_PCT_BW_PER_WEEK` constant into the engine via `clampToLossRate()` + 7 new tests.
+
+**Founder actions — both DONE:**
+- ✅ Supabase Authentication → Email Templates → **Reset Password** template now includes `{{ .Token }}` (project emits an **8-digit** OTP — the app handles any 6–10 digit length).
+- ✅ Migrations `0007_food_prices.sql` + `0008_subscriptions.sql` **applied to production Supabase** (`eeltroiupbgfgldburra`). All 8 migrations 0001–0008 are now live. (This resolves the long-standing "not yet applied" flag from prior handoffs.)
+
+**Verified on a real iPhone:** medical disclaimer on Home/Plan/onboarding, and the full forgot-password → enter code → set new password → signed-in flow.
+
+**Tests:** 126/126 pass (was 119). `npx tsc --noEmit` clean. `node_modules` must be `npm install`-ed on a fresh box first.
+
+**Deliberately deferred:** equipment customization (Phase 2.3) — founder's call; still 🟡.
+
+**What to do next:**
+1. **Mark PR #5 ready for review and merge to `main`** — the founder has verified it on device. (Was draft pending device testing; that's now complete.)
+2. Phase 4 is all credential-gated (audio dev client, OAuth, Spotify, MusicKit, RevenueCat). The founder does **not** want to start Phase 4 yet — wait for their go-ahead.
+3. If/when picking up product work without Phase 4 credentials, the open code-only item is Phase 2.3 equipment customization.
+
+---
+
 ## ⏳ Handoff state (2026-05-28, updated — second audio deferral)
 
 **Phase 3 shipped; Phase 2.6 audio re-deferred** on branch `claude/affectionate-lamport-d5JCe` (draft PR #4). Status:
@@ -63,6 +91,14 @@ One sentence per decision (per AI rule 13). Newest first.
 ---
 
 ## Decisions in chronological order (newest first)
+
+- 2026-05-29 (later) — **Essentials pass verified on a real iPhone; both founder actions done.** Founder added `{{ .Token }}` to the Supabase Reset Password template and applied migrations 0007 + 0008 to production (all 0001–0008 now live). Discovered the project emits an **8-digit** OTP (Supabase per-project OTP length), so the reset-screen copy was reworded to be length-agnostic ("code from your email" instead of "6-digit code") — the verify logic already accepted any 6+ length. Disclaimer + forgot-password flow confirmed working on device. PR #5 is ready to move from draft → merge.
+
+- 2026-05-29 — **Pre-Phase-4 "essentials" pass** on branch `claude/confident-brahmagupta-0ewOC` (founder chose to harden the existing app before tackling the credential-gated Phase 4). Four independent, reviewable commits; equipment customization (2.3) explicitly deferred again. tsc clean; tests 119 → 126.
+    - **Medical disclaimer (compliance, master prompt §11):** the mandatory disclaimer was only on the Profile tab. Added the existing `dashboard.disclaimer` string to the Home dashboard, the Plan tab, and the onboarding form (the calculation trigger). No new string needed.
+    - **i18n (AI Rule 9):** moved ~20 hardcoded English strings into the catalog — home greeting/messages/pill labels, bottom-tab titles, plan-tab copy + alerts, log empty/“add to” labels, the food-search “Common” badge, manual-food + workout-player error messages, the sign-in OAuth alert (rewritten to be generic, no dev jargon), and the sign-up placeholder. Added `tabs`, `home` string groups and extended `auth`/`log`/`plan`/`foods`/`workout`.
+    - **Forgot-password flow (auth gap):** implemented via Supabase **email-OTP recovery** rather than deep links — chosen because deep-link recovery is unreliable to test in Expo Go and needs native scheme handling. New `(auth)/forgot-password` (request 6-digit code) and `(auth)/reset-password` (verifyOtp → updateUser) screens + a “Forgot your password?” link on sign-in. Auth store gains a `recovery` flag so `(auth)/_layout` doesn’t redirect into the app while the recovery code briefly holds a session before the new password is set. **Founder action:** edit the Supabase “Reset Password” email template to include `{{ .Token }}` so users receive the 6-digit code.
+    - **1%/week loss-rate guardrail (safety, master prompt §3.4 / METHODOLOGY §4.5):** the `MAX_LOSS_RATE_PCT_BW_PER_WEEK` constant existed but was never enforced. Added pure `clampToLossRate()` in `energy.ts` (caps the deficit using 7,700 kcal/kg, returns pre-easing rate), wired before the BMR/min floor clamp in the engine, and surfaces a warning when eased. 7 new unit tests with worked examples. No methodology numbers changed — the engine now simply conforms to the already-documented §4.5, so `METHODOLOGY_VERSION` stays 1.0.0.
 
 - 2026-05-28 (second entry, late) — **Phase 2.6 hype-song audio re-deferred after second failed attempt on real iPhone.**
     - **What was tried this session:** migrated `src/lib/audio/playback.ts` from `expo-av` → `expo-audio` (the SDK 54+ replacement). Pre-downloaded the song from the Supabase Storage signed URL to a `file://` URI in the device cache via `expo-file-system/legacy` (`FileSystem.downloadAsync`) before handing it to `createAudioPlayer({ uri })`. Set `setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false, interruptionMode: 'duckOthers' })`. All this so we'd avoid the 302 redirect + ambiguous content-type from a streamed signed URL — which was the leading hypothesis from the 2026-05-24 first deferral.

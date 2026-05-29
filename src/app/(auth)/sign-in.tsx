@@ -26,11 +26,8 @@ export default function SignIn() {
     if (error) setError(error.message);
   };
 
-  const onOAuth = (provider: 'google' | 'apple') => {
-    Alert.alert(
-      'OAuth not configured',
-      `Add ${provider} credentials in Supabase → Authentication → Providers, then wire expo-auth-session here.`,
-    );
+  const onOAuth = (_provider: 'google' | 'apple') => {
+    Alert.alert(t('auth.oauthNotConfiguredTitle'), t('auth.oauthNotConfiguredBody'));
   };
 
   return (
@@ -61,6 +58,10 @@ export default function SignIn() {
           error={error ?? undefined}
         />
         <Button title={t('auth.signIn')} onPress={onSignIn} loading={loading} />
+
+        <Link href="/(auth)/forgot-password" className="text-center">
+          <Text variant="caption">{t('auth.forgotPassword')}</Text>
+        </Link>
 
         <View className="flex-row items-center gap-3 my-2">
           <View className="flex-1 h-px bg-border" />

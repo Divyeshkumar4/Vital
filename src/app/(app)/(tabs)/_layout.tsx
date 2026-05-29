@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { tokens } from '@/lib/design/tokens';
+import { t } from '@/i18n/strings';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -25,11 +26,11 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: tokens.colors.bg.DEFAULT },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: tabIcon('home-outline') }} />
-      <Tabs.Screen name="log" options={{ title: 'Log', tabBarIcon: tabIcon('list-outline') }} />
-      <Tabs.Screen name="workout" options={{ title: 'Workout', tabBarIcon: tabIcon('barbell-outline') }} />
-      <Tabs.Screen name="plan" options={{ title: 'Plan', tabBarIcon: tabIcon('restaurant-outline') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon('person-outline') }} />
+      <Tabs.Screen name="home" options={{ title: t('tabs.home'), tabBarIcon: tabIcon('home-outline') }} />
+      <Tabs.Screen name="log" options={{ title: t('tabs.log'), tabBarIcon: tabIcon('list-outline') }} />
+      <Tabs.Screen name="workout" options={{ title: t('tabs.workout'), tabBarIcon: tabIcon('barbell-outline') }} />
+      <Tabs.Screen name="plan" options={{ title: t('tabs.plan'), tabBarIcon: tabIcon('restaurant-outline') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile'), tabBarIcon: tabIcon('person-outline') }} />
     </Tabs>
   );
 }

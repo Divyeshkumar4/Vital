@@ -39,7 +39,7 @@ function MealSection({
       <View className="flex-row items-baseline justify-between">
         <Text variant="h2">{MEAL_LABELS[slot]}</Text>
         <Text variant="caption" className="text-fg-muted">
-          {empty ? 'Nothing yet' : `${Math.round(total.kcal)} kcal`}
+          {empty ? t('log.nothingYet') : `${Math.round(total.kcal)} kcal`}
         </Text>
       </View>
 
@@ -49,7 +49,7 @@ function MealSection({
           className="border border-dashed border-border rounded-md py-3 items-center"
         >
           <Text variant="caption" className="text-fg-muted">
-            + Add to {MEAL_LABELS[slot].toLowerCase()}
+            + {t('log.addTo')} {MEAL_LABELS[slot].toLowerCase()}
           </Text>
         </Pressable>
       ) : (

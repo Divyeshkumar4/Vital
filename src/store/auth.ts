@@ -9,8 +9,13 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  // True while the user is mid password-reset. Keeps the (auth) layout from
+  // redirecting into the app after the recovery code creates a session, so the
+  // reset screen can finish setting the new password first.
+  recovery: boolean;
   init: () => Promise<void>;
   signOut: () => Promise<void>;
+  setRecovery: (v: boolean) => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -18,6 +23,7 @@ export const useAuth = create<AuthState>((set) => ({
   user: null,
   loading: false,
   initialized: false,
+  recovery: false,
 
   init: async () => {
     if (!supabase) {
@@ -41,6 +47,8 @@ export const useAuth = create<AuthState>((set) => ({
     await supabase.auth.signOut();
     useProfile.getState().clear();
     useBilling.getState().clear();
-    set({ session: null, user: null, loading: false });
+    set({ session: null, user: null, loading: false, recovery: false });
   },
+
+  setRecovery: (v: boolean) => set({ recovery: v }),
 }));

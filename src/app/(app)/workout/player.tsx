@@ -113,14 +113,14 @@ export default function WorkoutPlayer() {
         const full = await getActiveRoutine(user.id);
         if (cancelled) return;
         if (!full) {
-          setError('No active routine.');
+          setError(t('workout.errNoRoutine'));
           setLoading(false);
           return;
         }
         setRoutineFull(full);
         const day = full.days.find((d) => d.id === dayId);
         if (!day) {
-          setError('Workout day not found.');
+          setError(t('workout.errDayNotFound'));
           setLoading(false);
           return;
         }

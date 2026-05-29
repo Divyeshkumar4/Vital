@@ -188,7 +188,7 @@ export default function AddLog() {
     return (
       <Screen>
         <View className="gap-4 mt-8">
-          <Text variant="h1">{error ?? 'Food not found.'}</Text>
+          <Text variant="h1">{error ?? t('log.foodNotFound')}</Text>
           <Button title={t('foods.backToSearch')} variant="secondary" onPress={() => router.back()} />
         </View>
       </Screen>

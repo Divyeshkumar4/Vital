@@ -6,7 +6,13 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 
 ---
 
-## 👉 Pickup point for the next AI agent (2026-05-28, updated — audio re-deferred)
+## 👉 Pickup point for the next AI agent (2026-05-29, updated — essentials pass VERIFIED ON DEVICE)
+
+**2026-05-29 essentials pass** (branch `claude/confident-brahmagupta-0ewOC` → draft PR #5, **verified working on a real iPhone**): before starting credential-gated Phase 4, hardened the existing app — (1) added the mandatory medical disclaimer to Home/Plan/onboarding, (2) moved ~20 hardcoded strings into the i18n catalog, (3) added a forgot-password flow (email-OTP recovery, length-agnostic copy for 6–10 digit codes), (4) wired the 1%/week max loss-rate safety guardrail into the science engine. Equipment customization (2.3) deferred again. tsc clean; 126 tests pass.
+
+**Founder actions done:** Supabase Reset-Password template now includes `{{ .Token }}` (project emits 8-digit OTP); **migrations 0007 + 0008 applied to production** — all 0001–0008 are now live (resolves the prior "not yet applied" flag).
+
+**Next:** mark PR #5 ready → merge to `main`. Phase 4 stays paused until the founder asks. See DECISIONS 2026-05-29.
 
 **Where we are:** Phase 0, 1, 2 (minus 2.6), and **Phase 3** are complete on branch `claude/affectionate-lamport-d5JCe` (draft PR #4). Phase 3.1 cost-of-eating is live with community pricing. Phase 3.2 freemium gating scaffold is live with a stub purchase flow — RevenueCat live billing moved to the new Phase 4.
 
@@ -35,14 +41,14 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started · 🔒 blocked on found
 ## Phase 0 — Foundation
 - ✅ 0.1 Init Expo SDK 54 + TypeScript strict + Expo Router v6 + NativeWind v4
 - ✅ 0.2 Supabase project + client wired (graceful no-op until `.env` is set)
-- 🟡 0.3 Auth — email sign-up / sign-in / sign-out working end-to-end
+- ✅ 0.3 Auth — email sign-up / sign-in / sign-out + **forgot-password (email-OTP recovery)** working end-to-end (2026-05-29; needs Supabase Reset-Password template to include `{{ .Token }}`)
 - ⏸ 0.3 Auth — Google / Apple OAuth (deferred — needs provider credentials from founder, then wire `expo-auth-session`)
 - ✅ 0.4 Docs scaffolding + GitHub repo
 - ✅ 0.5 Design system (tokens in `src/lib/design/tokens.ts` + base components)
 
 ## Phase 1 — Lean MVP: Nutrition core
 - ✅ 1.1 Onboarding — single scrollable form (age/sex/units/height/weight/body-fat/activity/persona/endurance/diet/goal) → Supabase `profiles` table with full RLS
-- ✅ 1.2 Science engine — Layer 1 of `docs/METHODOLOGY.md` (FuelWise v8.20 derived): persona × goal matrix, MSJ/HB/KM BMR, calorie caps 25%/40%/20%, per-meal protein age-graded, fiber 14 g/1000 kcal, activity-graded carb floors, BMI / BF% bands (incl. Asian). 100 / 100 unit tests with worked examples.
+- ✅ 1.2 Science engine — Layer 1 of `docs/METHODOLOGY.md` (FuelWise v8.20 derived): persona × goal matrix, MSJ/HB/KM BMR, calorie caps 25%/40%/20%, **1%/week max loss-rate clamp (§4.5, wired 2026-05-29)**, per-meal protein age-graded, fiber 14 g/1000 kcal, activity-graded carb floors, BMI / BF% bands (incl. Asian). 126 unit tests with worked examples.
 - ✅ 1.3 Results dashboard — calorie target, macro bars, per-meal protein, fiber, BMI / BF% bands, safety warnings filtered to actionable only
 - ✅ 1.4 Open Food Facts integration — search + barcode scan via `expo-camera`; `foods` cache table with RLS; bundled common-foods staples library (62 generic foods) merged into search; clean scanner error UX
 - ✅ 1.5 Food logging — `food_logs` table with full RLS; logging form with auto-suggested meal slot from time-of-day; today's totals on dashboard with progress bars; today's log screen grouped by meal with delete
@@ -79,7 +85,7 @@ Community / social, AI coach (LLM-assisted plans), wearable / IoT integrations, 
 
 ## Database migrations applied (production)
 
-In numeric order, all live on `eeltroiupbgfgldburra.supabase.co`:
+In numeric order — **all 0001–0008 are now live** on `eeltroiupbgfgldburra.supabase.co` (0007 + 0008 applied 2026-05-29):
 
 | File | Purpose | Phase |
 |---|---|---|
@@ -89,7 +95,7 @@ In numeric order, all live on `eeltroiupbgfgldburra.supabase.co`:
 | `0004_workouts.sql` | routines + routine_days + routine_exercises + workout_logs + set_logs + RLS | 2.1–2.5 |
 | `0005_exercise_audio.sql` | exercise_audio table + RLS + private `exercise-audio` Storage bucket + own-files-only storage policies | 2.6 |
 | `0006_excludes_eggs.sql` | profiles.excludes_eggs boolean (pure-vegetarian flag) | 2 bug-fix |
-| `0007_food_prices.sql` ⚠️ **not yet applied** | food_prices table + RLS; profiles.region/currency; food_logs.price_at_log/currency_at_log snapshot | 3.1 |
-| `0008_subscriptions.sql` ⚠️ **not yet applied** | subscriptions table + RLS (read-own; insert/update-own restricted to source='stub') | 3.2 |
+| `0007_food_prices.sql` ✅ applied 2026-05-29 | food_prices table + RLS; profiles.region/currency; food_logs.price_at_log/currency_at_log snapshot | 3.1 |
+| `0008_subscriptions.sql` ✅ applied 2026-05-29 | subscriptions table + RLS (read-own; insert/update-own restricted to source='stub') | 3.2 |
 
 Phase 2 stores exercises in code (`src/lib/api/exercises.ts`) rather than a Supabase table — referenced from `routine_exercises.exercise_id` by stable text id. User-defined exercises (if ever needed) will go in a separate `user_exercises` table later.
