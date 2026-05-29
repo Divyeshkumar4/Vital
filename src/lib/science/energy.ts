@@ -7,6 +7,8 @@ import {
   conventionalCalorieMinimum,
   DEFICIT_CAP_DEFAULT_PCT,
   DEFICIT_CAP_SUPERVISED_PCT,
+  KCAL_PER_KG_BODYWEIGHT,
+  MAX_LOSS_RATE_PCT_BW_PER_WEEK,
   SURPLUS_CAP_PCT,
 } from './constants';
 
@@ -84,4 +86,42 @@ export function clampToFloor(
     return { finalCalories: floor, flooredTo: floor };
   }
   return { finalCalories: candidateCalories, flooredTo: null };
+}
+
+export interface LossRateApplied {
+  finalCalories: number;
+  /**
+   * Projected loss as %BW/week BEFORE easing — only present when the cap
+   * raised calories. Null means the deficit was already within the safe rate.
+   */
+  easedFromRatePct: number | null;
+}
+
+/**
+ * Safety guardrail (METHODOLOGY § 4.5 / master prompt § 3.4): cap the deficit
+ * so projected weight loss stays at or below MAX_LOSS_RATE_PCT_BW_PER_WEEK
+ * (1%) of body weight per week. Uses 7,700 kcal per kg of body weight
+ * (Wishnofsky). Only applies to weight-loss goals; surplus/maintain pass through.
+ */
+export function clampToLossRate(
+  candidateCalories: number,
+  tdeeKcal: number,
+  weightKg: number,
+  goal: Goal,
+): LossRateApplied {
+  if (goal !== 'lose') {
+    return { finalCalories: candidateCalories, easedFromRatePct: null };
+  }
+  const dailyDeficit = tdeeKcal - candidateCalories;
+  if (dailyDeficit <= 0) {
+    return { finalCalories: candidateCalories, easedFromRatePct: null };
+  }
+  const weeklyLossKg = (dailyDeficit * 7) / KCAL_PER_KG_BODYWEIGHT;
+  const ratePct = (weeklyLossKg / weightKg) * 100;
+  if (ratePct <= MAX_LOSS_RATE_PCT_BW_PER_WEEK) {
+    return { finalCalories: candidateCalories, easedFromRatePct: null };
+  }
+  const maxWeeklyLossKg = (MAX_LOSS_RATE_PCT_BW_PER_WEEK / 100) * weightKg;
+  const maxDailyDeficit = (maxWeeklyLossKg * KCAL_PER_KG_BODYWEIGHT) / 7;
+  return { finalCalories: tdeeKcal - maxDailyDeficit, easedFromRatePct: ratePct };
 }

@@ -3,10 +3,10 @@
  * Takes a ScienceInput, returns a ScienceComputeResult.
  */
 import type { ScienceComputeResult, ScienceInput, ScienceResult, Warning } from './types';
-import { METHODOLOGY_VERSION, INPUT_RANGES } from './constants';
+import { METHODOLOGY_VERSION, INPUT_RANGES, MAX_LOSS_RATE_PCT_BW_PER_WEEK } from './constants';
 import { resolveMatrix } from './matrix';
 import { bmrHB, bmrKM, bmrMSJ, leanBodyMass } from './bmr';
-import { activityFactorOf, applyGoalAdjustment, clampToFloor, tdee } from './energy';
+import { activityFactorOf, applyGoalAdjustment, clampToFloor, clampToLossRate, tdee } from './energy';
 import { assembleMacros } from './macros';
 import { fiberTargetG, mealDistribution } from './distribution';
 import { bmi, bmiBand, bodyFatCategory } from './bands';
@@ -85,8 +85,9 @@ export function compute(input: ScienceInput): ScienceComputeResult {
   });
   if (!adj.ok) return { ok: false, message: adj.message };
 
-  // Floor clamp
-  const floored = clampToFloor(adj.finalCalories, bmrValue, input.sex);
+  // Loss-rate clamp (≤ 1% BW/week, METHODOLOGY § 4.5), then BMR/min floor on top.
+  const rateClamped = clampToLossRate(adj.finalCalories, tdeeValue, input.weightKg, input.goal);
+  const floored = clampToFloor(rateClamped.finalCalories, bmrValue, input.sex);
 
   // Matrix cell for macro defaults
   const cell = resolveMatrix(input.persona, input.goal, input.age, endurance);
@@ -121,6 +122,12 @@ export function compute(input: ScienceInput): ScienceComputeResult {
     warnings.unshift({
       severity: 'warn',
       text: `Your calorie target was raised to ${Math.round(floored.flooredTo)} kcal/day to keep you above a safe minimum. Eating less than this for long stretches can harm your metabolism and lose muscle.`,
+    });
+  }
+  if (rateClamped.easedFromRatePct !== null) {
+    warnings.unshift({
+      severity: 'warn',
+      text: `We eased your daily target to keep weight loss at a safe ${MAX_LOSS_RATE_PCT_BW_PER_WEEK}% of body weight per week. Faster loss tends to cost muscle and is hard to keep off.`,
     });
   }
 

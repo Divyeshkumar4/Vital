@@ -4,6 +4,7 @@ import {
   calorieFloor,
   applyGoalAdjustment,
   clampToFloor,
+  clampToLossRate,
 } from '../energy';
 import { ACTIVITY_FACTORS, conventionalCalorieMinimum } from '../constants';
 
@@ -109,5 +110,44 @@ describe('clampToFloor', () => {
     const r = clampToFloor(1100, 1100, 'female');
     expect(r.finalCalories).toBe(1200);
     expect(r.flooredTo).toBe(1200);
+  });
+});
+
+describe('clampToLossRate (METHODOLOGY § 4.5 — ≤ 1% BW/week)', () => {
+  it('passes maintain/gain through unchanged', () => {
+    expect(clampToLossRate(2000, 2500, 80, 'maintain')).toEqual({
+      finalCalories: 2000,
+      easedFromRatePct: null,
+    });
+    expect(clampToLossRate(2750, 2500, 80, 'gain')).toEqual({
+      finalCalories: 2750,
+      easedFromRatePct: null,
+    });
+  });
+
+  it('leaves a within-cap deficit unchanged', () => {
+    // 80 kg, TDEE 2500, candidate 2100 → deficit 400/day.
+    // weekly loss = 400×7/7700 = 0.3636 kg = 0.45%/wk ≤ 1% → no clamp.
+    const r = clampToLossRate(2100, 2500, 80, 'lose');
+    expect(r.finalCalories).toBe(2100);
+    expect(r.easedFromRatePct).toBeNull();
+  });
+
+  it('eases a too-aggressive deficit back to exactly 1% BW/week', () => {
+    // 100 kg, TDEE 3000, candidate 1600 → deficit 1400/day.
+    // weekly loss = 1400×7/7700 = 1.2727 kg = 1.27%/wk > 1% → clamp.
+    // max daily deficit = (0.01×100×7700)/7 = 1100 → final = 3000 − 1100 = 1900.
+    const r = clampToLossRate(1600, 3000, 100, 'lose');
+    expect(r.finalCalories).toBeCloseTo(1900, 6);
+    expect(r.easedFromRatePct).toBeCloseTo(1.2727, 3);
+    // Sanity: the eased target really does sit at 1% BW/week.
+    const easedRate = ((3000 - r.finalCalories) * 7) / 7700 / 100 * 100;
+    expect(easedRate).toBeCloseTo(1, 6);
+  });
+
+  it('does not clamp when candidate is at or above TDEE (no deficit)', () => {
+    const r = clampToLossRate(2600, 2500, 80, 'lose');
+    expect(r.finalCalories).toBe(2600);
+    expect(r.easedFromRatePct).toBeNull();
   });
 });
