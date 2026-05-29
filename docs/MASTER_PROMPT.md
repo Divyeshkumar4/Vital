@@ -183,6 +183,10 @@ Design rule: **log entries snapshot the values** (don't just reference the catal
 
 ## 8. PHASED ROADMAP (build in this order)
 
+> **Roadmap restructured 2026-05-29 — see `docs/ROADMAP.md` for the current, aggressive phasing.** The
+> phases below are the original plan and remain valid as background; the live build order and the full
+> 16-feature coverage map now live in `docs/ROADMAP.md` (per the founder decision logged in `docs/DECISIONS.md`).
+
 ### PHASE 0 — Foundation (setup only)
 - 0.1 Init Expo + TypeScript + Expo Router + NativeWind. Confirm it runs on a phone via Expo Go.
 - 0.2 Create Supabase project; wire client; set up `.env`.

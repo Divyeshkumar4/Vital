@@ -4,6 +4,23 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ---
 
+## 🗺️ Roadmap rebuilt — aggressive (2026-05-29)
+
+Founder supplied the full 16-feature product spec (~70 sub-points) and asked to **rebuild the roadmap
+aggressively** because the previous one-task-per-line plan was too slow per phase; founder chose
+**"roadmap only"** for this pass (no feature code). `docs/ROADMAP.md` was rewritten to fold in every
+spec sub-point: phases now **bundle many features**, **code-only Phases 4–9 run in parallel** (Logging
+Power · Dashboard/Macros · Progress/Activity/Hydration · Recipes/Planning/Insights · Notifications ·
+Privacy/Offline/Localization), and credential/native-gated work is walled off into **Phase 10 (AI photo
++ coach — Claude API)**, **Phase 11 (health platforms/wearables/watch)**, and **Phase 12 (RevenueCat
+billing + OAuth + hype-song audio + streaming music)**. A **Feature-spec coverage map** table now lists
+every sub-point with status (✅ already built / 🗺️ scheduled) and target phase. No code, no new
+dependencies, no schema changes this pass — all library/credential decisions are deferred to the phase
+where the founder approves them (AI Rules 1–3). This roadmap supersedes the original `MASTER_PROMPT.md`
+§8 phasing; the master prompt remains source of truth for vision/science/stack/data model.
+
+---
+
 ## ⏳ Handoff state (2026-05-29 — pre-Phase-4 essentials pass, VERIFIED ON DEVICE)
 
 **Active branch:** `claude/confident-brahmagupta-0ewOC` → **draft PR #5** (open). All work below is committed and pushed; working tree is clean. **Founder confirmed it works on a real iPhone (2026-05-29).**
