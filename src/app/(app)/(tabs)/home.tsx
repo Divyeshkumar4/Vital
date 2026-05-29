@@ -22,11 +22,11 @@ import { t } from '@/i18n/strings';
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 5) return 'Still up?';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 22) return 'Good evening';
-  return 'Late night';
+  if (h < 5) return t('home.greetingNight');
+  if (h < 12) return t('home.greetingMorning');
+  if (h < 17) return t('home.greetingAfternoon');
+  if (h < 22) return t('home.greetingEvening');
+  return t('home.greetingLate');
 }
 
 function severityClasses(s: 'danger' | 'warn' | 'info'): string {
@@ -118,9 +118,7 @@ export default function Home() {
           <Text variant="h1">{profile?.name || user?.email || ''}</Text>
         </View>
         <Card>
-          <Text variant="body">
-            Your profile is missing a value the science engine needs. Tap the Profile tab to update.
-          </Text>
+          <Text variant="body">{t('home.profileMissing')}</Text>
         </Card>
       </Screen>
     );
@@ -172,7 +170,7 @@ export default function Home() {
               marginTop: 2,
             }}
           >
-            {overshoot ? 'over target' : 'kcal left'}
+            {overshoot ? t('home.overTarget') : t('home.kcalLeft')}
           </RNText>
           <RNText
             style={{
@@ -188,9 +186,9 @@ export default function Home() {
         </CircularProgress>
 
         <View className="flex-row flex-wrap justify-center gap-2">
-          <Pill label="Protein" value={`${proteinLeft} g`} tone="accent" />
-          <Pill label="Fat" value={`${fatLeft} g`} tone="warn" />
-          <Pill label="Carbs" value={`${carbsLeft} g`} tone="info" />
+          <Pill label={t('dashboard.protein')} value={`${proteinLeft} g`} tone="accent" />
+          <Pill label={t('dashboard.fat')} value={`${fatLeft} g`} tone="warn" />
+          <Pill label={t('dashboard.carbs')} value={`${carbsLeft} g`} tone="info" />
         </View>
       </View>
 
@@ -234,7 +232,7 @@ export default function Home() {
         <Card>
           <View className="flex-row items-baseline justify-between">
             <Text variant="caption">{t('workout.todayTitle')}</Text>
-            <Pill label="" value={`${todayDay.exercises.length} exercises`} tone="info" />
+            <Pill label="" value={`${todayDay.exercises.length} ${t('workout.exercises')}`} tone="info" />
           </View>
           <Text variant="h2">{todayDay.name}</Text>
           <Pressable
@@ -256,7 +254,7 @@ export default function Home() {
       ) : routine ? (
         <Card>
           <Text variant="caption">{t('workout.todayTitle')}</Text>
-          <Text variant="body">Rest day. Recovery is when growth happens.</Text>
+          <Text variant="body">{t('home.restDay')}</Text>
         </Card>
       ) : null}
 

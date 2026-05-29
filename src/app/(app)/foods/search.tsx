@@ -202,7 +202,7 @@ export default function FoodSearch() {
                 />
               ) : (
                 <View className="w-14 h-14 rounded-md bg-bg-elevated items-center justify-center">
-                  <Text variant="caption">{item.kind === 'staple' ? 'Common' : '—'}</Text>
+                  <Text variant="caption">{item.kind === 'staple' ? t('foods.commonBadge') : '—'}</Text>
                 </View>
               )}
               <View className="flex-1 gap-1">

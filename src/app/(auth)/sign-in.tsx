@@ -26,11 +26,8 @@ export default function SignIn() {
     if (error) setError(error.message);
   };
 
-  const onOAuth = (provider: 'google' | 'apple') => {
-    Alert.alert(
-      'OAuth not configured',
-      `Add ${provider} credentials in Supabase → Authentication → Providers, then wire expo-auth-session here.`,
-    );
+  const onOAuth = (_provider: 'google' | 'apple') => {
+    Alert.alert(t('auth.oauthNotConfiguredTitle'), t('auth.oauthNotConfiguredBody'));
   };
 
   return (

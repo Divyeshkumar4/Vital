@@ -30,12 +30,12 @@ export default function ManualFood() {
     setError(null);
     const cleanName = name.trim();
     if (!cleanName) {
-      setError('Give the food a name.');
+      setError(t('foods.manualNeedName'));
       return;
     }
     const k = parseNonNeg(kcal);
     if (k === null) {
-      setError('Enter calories per 100 g.');
+      setError(t('foods.manualNeedKcal'));
       return;
     }
     setSaving(true);
