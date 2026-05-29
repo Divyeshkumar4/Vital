@@ -4,6 +4,32 @@ One sentence per decision (per AI rule 13). Newest first.
 
 ---
 
+## ⏳ Handoff state (2026-05-29 — pre-Phase-4 essentials pass)
+
+**Active branch:** `claude/confident-brahmagupta-0ewOC` → **draft PR #5** (open, not yet merged). All work below is committed and pushed; working tree is clean.
+
+**What this branch did** (founder chose to harden the existing app before starting the credential-gated Phase 4). Four independent commits + a docs commit:
+
+1. **Medical disclaimer (compliance, §11):** added the mandatory disclaimer to the Home dashboard, Plan tab, and onboarding form — it was previously only on the Profile tab.
+2. **i18n (AI Rule 9):** moved ~20 hardcoded English strings into `src/i18n/strings.ts` (`tabs`/`home` groups added; `auth`/`log`/`plan`/`foods`/`workout` extended).
+3. **Forgot-password flow:** new `(auth)/forgot-password` + `(auth)/reset-password` screens using Supabase **email-OTP recovery** (no deep links). Auth store gained a `recovery` flag. **FOUNDER ACTION REQUIRED:** add `{{ .Token }}` to the Supabase Authentication → Email Templates → **Reset Password** template, or the 6-digit code won't appear in the email.
+4. **1%/week loss-rate guardrail (safety, §3.4 / METHODOLOGY §4.5):** wired the previously-unused `MAX_LOSS_RATE_PCT_BW_PER_WEEK` constant into the engine via `clampToLossRate()` + 7 new tests.
+
+**Tests:** 126/126 pass (was 119). `npx tsc --noEmit` clean. `node_modules` must be `npm install`-ed on a fresh box first.
+
+**Deliberately deferred:** equipment customization (Phase 2.3) — founder's call; still 🟡.
+
+**Still outstanding from before this branch (unchanged):**
+- **Migrations `0007_food_prices.sql` + `0008_subscriptions.sql`** — earlier docs flagged these as "not yet applied" to production Supabase (`eeltroiupbgfgldburra`). Phase 3 (cost + freemium) code is merged to `main`, but **confirm with the founder whether these two migrations were actually applied** — if not, the live cost/freemium features will error against the DB.
+- Phase 4 is all credential-gated (audio dev client, OAuth, Spotify, MusicKit, RevenueCat). The founder said they do **not** want to start Phase 4 yet.
+
+**What to do next:**
+1. Founder to add `{{ .Token }}` to the Supabase reset-password template, then test the forgot-password flow on a phone.
+2. Founder to confirm migrations 0007/0008 are applied to production.
+3. Decide whether to mark PR #5 ready for review / merge to `main`.
+
+---
+
 ## ⏳ Handoff state (2026-05-28, updated — second audio deferral)
 
 **Phase 3 shipped; Phase 2.6 audio re-deferred** on branch `claude/affectionate-lamport-d5JCe` (draft PR #4). Status:
