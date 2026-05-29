@@ -59,6 +59,10 @@ export default function SignIn() {
         />
         <Button title={t('auth.signIn')} onPress={onSignIn} loading={loading} />
 
+        <Link href="/(auth)/forgot-password" className="text-center">
+          <Text variant="caption">{t('auth.forgotPassword')}</Text>
+        </Link>
+
         <View className="flex-row items-center gap-3 my-2">
           <View className="flex-1 h-px bg-border" />
           <Text variant="caption">{t('auth.or')}</Text>

@@ -56,6 +56,24 @@ const en = {
     oauthNotConfiguredTitle: 'Sign-in option not ready yet',
     oauthNotConfiguredBody:
       'Social sign-in needs to be set up before it can be used. For now, please use your email and password.',
+    forgotPassword: 'Forgot your password?',
+    // Forgot-password (request code) screen
+    forgotTitle: 'Reset your password',
+    forgotSubtitle: 'Enter your email and we’ll send you a 6-digit code to reset your password.',
+    sendCode: 'Send reset code',
+    codeSent: 'Check your email for a 6-digit code.',
+    backToSignIn: 'Back to sign in',
+    // Reset-password (enter code + new password) screen
+    resetTitle: 'Enter your code',
+    resetSubtitle: 'Type the 6-digit code from your email and choose a new password.',
+    resetCode: 'Reset code',
+    resetCodePlaceholder: '6-digit code',
+    newPassword: 'New password',
+    resetSubmit: 'Set new password',
+    resetSuccess: 'Password updated. You’re signed in.',
+    resetCodeInvalid: 'That code is incorrect or has expired. Request a new one.',
+    resetNeedEmail: 'Enter the email you used to request the code.',
+    resetNeedCode: 'Enter the 6-digit code from your email.',
   },
   onboarding: {
     title: 'Let’s build your plan',
