@@ -183,6 +183,12 @@ export default function PlanTab() {
         onClose={() => setShowPaywall(false)}
         reason="Premium unlocks 5 meal options per slot (free is 2)."
       />
+
+      <View className="mb-6">
+        <Text variant="caption" className="text-fg-subtle text-center">
+          {t('dashboard.disclaimer')}
+        </Text>
+      </View>
     </Screen>
   );
 }

@@ -270,7 +270,10 @@ export default function Home() {
         </Card>
       ) : null}
 
-      <View className="mb-6">
+      <View className="mb-6 gap-1">
+        <Text variant="caption" className="text-fg-subtle text-center">
+          {t('dashboard.disclaimer')}
+        </Text>
         <Text variant="caption" className="text-fg-subtle text-center">
           {t('dashboard.methodologyTag')} v{result.methodologyVersion}
         </Text>

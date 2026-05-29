@@ -463,8 +463,12 @@ export default function Onboarding() {
         title={t('onboarding.submit')}
         onPress={onSubmit}
         loading={submitting || loading}
-        className="mt-2 mb-8"
+        className="mt-2"
       />
+
+      <Text variant="caption" className="text-fg-subtle text-center mb-8">
+        {t('dashboard.disclaimer')}
+      </Text>
     </Screen>
   );
 }
